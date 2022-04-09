@@ -9,11 +9,14 @@ import inspect
 import types
 import numpy as np
 import pandas as pd
+import scipy.io
 
 DEFAULT_ABALONE_PATH = os.path.join(
     os.getcwd(), "data", "abalone.csv")
 DEFAULT_WINE_PATH = os.path.join(
     os.getcwd(), "data", "Wine_data.csv")
+DEFAULT_CIFAR10_PATH = os.path.join(
+    os.getcwd(), "data", "cifar10_data_batch_2.mat")
 
 
 def is_loader(object):
@@ -132,6 +135,33 @@ def load_iris(labels: bool = False):
         return data
 
     labels = (iris.target).squeeze()
+
+    return data, labels
+
+
+def load_cifar10(path: str = DEFAULT_CIFAR10_PATH, labels: bool = False):
+    """
+    CLASSIFICATION
+
+    Loads the cifar10 data set.
+
+    Source: Course website
+    Number of Instances: 10000
+    Number of Attributes: 3072
+    Attribute Information (Raw):
+        Pixel values ranging 0-255.
+    Description:
+    The CIFAR-10 dataset (Canadian Institute For Advanced Research) is a 
+    collection of images that are commonly used to train machine learning 
+    and computer vision algorithms.
+    """
+    mat = scipy.io.loadmat('data/cifar10_data_batch_2.mat')
+    data = mat['data'].astype(float)
+
+    if not labels:
+        return data
+
+    labels = mat['labels'].astype(int).squeeze()
 
     return data, labels
 
