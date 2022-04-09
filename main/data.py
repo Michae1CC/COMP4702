@@ -166,6 +166,29 @@ def load_cifar10(path: str = DEFAULT_CIFAR10_PATH, labels: bool = False):
     return data, labels
 
 
+def load_swiss_roll(labels: bool = False, n_samples=1500, noise=0.0):
+    """
+    REGRESSION
+
+    Creates a swiss roll data set.
+
+    Source: sklearn, see:
+    https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_swiss_roll.html
+    https://scikit-learn.org/stable/auto_examples/manifold/plot_swissroll.html#sphx-glr-auto-examples-manifold-plot-swissroll-py
+    Number of Attributes: 3
+    Attribute Information:
+        X,Y and Z coordinates of each point
+    """
+    from sklearn.datasets import make_swiss_roll
+
+    data, data_labels = make_swiss_roll(n_samples=n_samples, noise=noise)
+
+    if not labels:
+        return data
+
+    return data, data_labels.squeeze()
+
+
 def load_data(data: str, path: str = None, labels: bool = False, **kwargs):
     """
     Loads the specified data set.

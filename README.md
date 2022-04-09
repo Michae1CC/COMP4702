@@ -20,3 +20,4 @@ The contents are divided up by weeks with a specific file dedicated to each topi
 ## Week 6 - Dimensionality Reduction
 
 - [PCA](main/pca.py)
+- [t-Stochastic Neighbour Embedding](main/tsne.py)
