@@ -17,6 +17,11 @@ The contents are divided up by weeks with a specific file dedicated to each topi
 - [k-NN estimator](main/knn.py)
 - [ksd estimation](main/kde.py)
 
+## Week 5 - Clustering
+
+- [k-means clustering](main/k_means.py)
+- [Mean Shift](main/mean_shift.py)
+
 ## Week 6 - Dimensionality Reduction
 
 - [PCA](main/pca.py)

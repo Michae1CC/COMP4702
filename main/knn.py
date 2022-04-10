@@ -3,9 +3,6 @@
 __author__ = 'Michael Ciccotosto-Camp'
 __version__ = ''
 
-import os
-
-import numpy as np
 from sklearn.neighbors import KNeighborsClassifier
 
 from data import load_data
