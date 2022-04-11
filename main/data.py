@@ -17,6 +17,8 @@ DEFAULT_WINE_PATH = os.path.join(
     os.getcwd(), "data", "Wine_data.csv")
 DEFAULT_CIFAR10_PATH = os.path.join(
     os.getcwd(), "data", "cifar10_data_batch_2.mat")
+DEFAULT_SPAM_PATH = os.path.join(
+    os.getcwd(), "data", "spambase.data")
 
 
 def is_loader(object):
@@ -155,7 +157,7 @@ def load_cifar10(path: str = DEFAULT_CIFAR10_PATH, labels: bool = False):
     collection of images that are commonly used to train machine learning 
     and computer vision algorithms.
     """
-    mat = scipy.io.loadmat('data/cifar10_data_batch_2.mat')
+    mat = scipy.io.loadmat(path)
     data = mat['data'].astype(float)
 
     if not labels:
@@ -164,6 +166,45 @@ def load_cifar10(path: str = DEFAULT_CIFAR10_PATH, labels: bool = False):
     labels = mat['labels'].astype(int).squeeze()
 
     return data, labels
+
+
+def load_spam(path: str = DEFAULT_SPAM_PATH, labels: bool = False):
+    """
+    CLASSIFICATION
+
+    Loads a STANDARDIZED VERSION of the spam data set.
+
+    Source: https://archive.ics.uci.edu/ml/datasets/spambase
+    Number of Instances: 4601
+    Number of Attributes: 57
+    Attribute Information (Raw):
+        - 48 continuous real [0,100] attributes of type word_freq_WORD
+        = percentage of words in the e-mail that match WORD, i.e. 100 * (number of times the WORD appears in the e-mail) / total number of words in e-mail. A "word" in this case is any string of alphanumeric characters bounded by non-alphanumeric characters or end-of-string.
+        - 6 continuous real [0,100] attributes of type char_freq_CHAR]
+        = percentage of characters in the e-mail that match CHAR, i.e. 100 * (number of CHAR occurences) / total characters in e-mail
+        - 1 continuous real [1,...] attribute of type capital_run_length_average
+        = average length of uninterrupted sequences of capital letters
+        - 1 continuous integer [1,...] attribute of type capital_run_length_longest
+        = length of longest uninterrupted sequence of capital letters
+        - 1 continuous integer [1,...] attribute of type capital_run_length_total
+        = sum of length of uninterrupted sequences of capital letters
+        = total number of capital letters in the e-mail
+        - 1 nominal {0,1} class attribute of type spam
+        = denotes whether the e-mail was considered spam (1) or not (0), i.e. unsolicited commercial e-mail.
+
+        - labels denote whether the e-mail was considered spam (1) or not (0)
+    """
+    from sklearn import preprocessing
+    data = np.loadtxt(path, delimiter=",", skiprows=0)
+    data_pro = data[:, 0:-1].astype(float)
+    scaler = preprocessing.StandardScaler().fit(data_pro)
+    data_pro = scaler.transform(data_pro)
+    labels_pro = data[:, -1].astype(int).squeeze()
+
+    if not labels:
+        return data_pro
+
+    return data_pro, labels_pro
 
 
 def load_swiss_roll(labels: bool = False, n_samples=1500, noise=0.0):

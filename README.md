@@ -12,6 +12,10 @@ The repository is designed to provide python examples to every model and data re
 
 The contents are divided up by weeks with a specific file dedicated to each topic within that week.
 
+## Week 2 - Principles of Supervised Learning
+
+- [Logistic Regression](main/log_reg.py)
+
 ## Week 4 - Density Estimation
 
 - [k-NN estimator](main/knn.py)

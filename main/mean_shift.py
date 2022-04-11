@@ -14,7 +14,7 @@ from data import load_data
 
 def iris_example():
     """
-    Examples of using k-means using the iris data set.
+    Example of using mean-shift clustering estimation using the iris data set.
     """
     x, labels = load_data("iris", labels=True)
     # A bit of trial and error needed before getting a suitable bandwidth
