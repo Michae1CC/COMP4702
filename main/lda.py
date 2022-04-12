@@ -3,11 +3,8 @@
 __author__ = 'Michael Ciccotosto-Camp'
 __version__ = ''
 
-import os
-
 import numpy as np
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 
 from data import load_data
 
@@ -20,12 +17,10 @@ def cifar10_example():
     X, y = load_data("cifar10", labels=True)
     # Normalize the data
     X /= 255
-    pca_model = PCA(n_components=2)
-    X_fitted = pca_model.fit_transform(X)
+    lda_model = LDA(n_components=2)
+    X_fitted = lda_model.fit_transform(X, y)
     classes = sorted(list(np.unique(y)))
 
-    # Should hopefully look something like this!:
-    # https://res.cloudinary.com/dyd911kmh/image/upload/f_auto,q_auto:best/v1635528091/output_128_1_ceaxep.png
     from matplotlib import pyplot as plt
     import seaborn as sns
     plt.style.use("fast")
@@ -36,8 +31,8 @@ def cifar10_example():
         cls_fitted = X_fitted[y == cls_]
         plt.scatter(cls_fitted[:, 0].squeeze(),
                     cls_fitted[:, 1].squeeze(), s=10, alpha=0.4, color=clr)
-    plt.xlabel("PC 1", fontsize=12, fontweight="bold")
-    plt.ylabel("PC 2", fontsize=12, fontweight="bold")
+    plt.xlabel("Component 1", fontsize=12, fontweight="bold")
+    plt.ylabel("Component 2", fontsize=12, fontweight="bold")
     plt.tight_layout()
     plt.show()
     return

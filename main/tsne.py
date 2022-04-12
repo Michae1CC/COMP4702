@@ -5,6 +5,8 @@ __version__ = ''
 
 import numpy as np
 
+from sklearn.manifold import TSNE
+
 from data import load_data
 
 
@@ -198,8 +200,38 @@ def swiss_roll_example():
     return
 
 
+def swiss_roll_sklearn_example():
+    """
+    Examples of using tSNE on the swiss_roll data set using the sklearn 
+    function (much faster than the function provided by the paper). Similar to
+    the week 6 practical question. 
+    """
+    # Reduce the number of dimensions from 3 to 2.
+    X, y = load_data("swiss_roll", labels=True, n_samples=1500, noise=0.0)
+    tsne_model = TSNE(n_components=2, init="random",
+                      perplexity=20.0, n_iter=1000, n_iter_without_progress=300)
+    X.astype(float)
+    # print(type(X))
+    X_fitted = tsne_model.fit_transform(X)
+
+    import matplotlib.pyplot as plt
+    fig = plt.figure()
+    ax = fig.add_subplot(211, projection="3d")
+    ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=y, cmap=plt.cm.Spectral)
+    ax.set_title("Original data")
+
+    ax = fig.add_subplot(212)
+    ax.scatter(X_fitted[:, 0], X_fitted[:, 1], c=y, cmap=plt.cm.Spectral)
+    plt.axis("tight")
+    plt.xticks([]), plt.yticks([])
+    plt.title("Projected data")
+    plt.show()
+
+    return
+
+
 def main():
-    swiss_roll_example()
+    swiss_roll_sklearn_example()
 
 
 if __name__ == "__main__":
