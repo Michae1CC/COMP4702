@@ -547,6 +547,7 @@ batch
 # End of https://www.toptal.com/developers/gitignore/api/haskell,python,latex,windows,macos,linux,vscode
 
 ### data ###
+data
 **/*.data
 **/*.data/*
 .data/*
