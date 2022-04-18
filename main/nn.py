@@ -29,13 +29,14 @@ def cifar10_example():
     hl1 = 100
     hl2 = 100
     # Create a list with the size of each layer
-    layer_sizes = [d, hl1, hl2]
-    torch_layers = []
-    for i in range(len(layer_sizes)-1):
-        torch_layers.append(torch.nn.Linear(layer_sizes[i], layer_sizes[i+1]))
-        torch_layers.append(torch.nn.ReLU())
-    # Add an output layer
-    torch_layers.append(torch.nn.Linear(layer_sizes[-1], n_classes))
+    torch_layers = (
+        [torch.nn.Linear(d, hl1)]
+        + [torch.nn.LeakyReLU()]
+        + [torch.nn.Linear(hl1, hl2)]
+        + [torch.nn.LeakyReLU()]
+        # Add an output layer
+        + [torch.nn.Linear(hl2, n_classes)]
+    )
     # The Sequential function essentially constructs our model and returns it
     # as an object.
     nn_model = torch.nn.Sequential(*torch_layers)
@@ -55,12 +56,12 @@ def cifar10_example():
         "train_acc": [],
         "val_acc": []
     }
+    print(f"Completed: ", end="")
     for i in range(optimisation_steps + 1):
         # Randomly samples for this batch
         idx = np.random.randint(0, n, size=batch_size)
         X_batch = X[idx]
         y_batch = y[idx]
-        # print(X_batch.shape)
         # Predict the classes for the batch inputs
         y_pred = nn_model(torch.from_numpy(X_batch).float())
         # Compute the loss by comparing the predicted labels vs the actual labels
@@ -72,20 +73,23 @@ def cifar10_example():
         loss.backward()
         # Update the weights
         optimiser.step()
+        # record the metrics every 1000 steps
         if i % 1000 == 0:
+            print(f"{i},", end="", flush=True)
             train_pred = nn_model(torch.from_numpy(X_batch).float())
             val_pred = nn_model(torch.from_numpy(X).float())
             train_accuracy = torch.mean(
                 (train_pred.argmax(dim=1) == torch.from_numpy(y_batch)).float())
             val_accuracy = torch.mean(
                 (val_pred.argmax(dim=1) == torch.from_numpy(y)).float())
-            # print the loss every 100 steps
             metrics["iter"].append(i)
-            metrics["loss"].append(val_accuracy)
-            metrics["val_acc"].append(val_accuracy)
-            metrics["train_acc"].append(val_accuracy)
+            metrics["loss"].append(loss.item())
+            metrics["val_acc"].append(val_accuracy.item())
+            metrics["train_acc"].append(train_accuracy.item())
 
-    print(metrics["val_acc"])
+    print()
+    from pprint import pprint
+    pprint(metrics)
 
 
 def main():

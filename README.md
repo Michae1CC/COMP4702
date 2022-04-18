@@ -31,3 +31,8 @@ The contents are divided up by weeks with a specific file dedicated to each topi
 - [PCA](main/pca.py)
 - [LDA](main/lda.py)
 - [t-Stochastic Neighbour Embedding](main/tsne.py)
+
+## Week 7-9 - Neural Networks
+
+- [Neural Networks](main/nn.py)
+- [Auto-Encoding](main/ae.py)
