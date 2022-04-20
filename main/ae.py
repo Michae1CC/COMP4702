@@ -12,6 +12,19 @@ import matplotlib.pyplot as plt
 from data import load_data
 
 
+"""
+An autoencoder is a type of artificial neural network used to learn 
+efficient codings of unlabeled data (unsupervised learning). The encoding 
+is validated and refined by attempting to regenerate the input from the 
+encoding. The autoencoder learns a representation (encoding) for a set of 
+data, typically for dimensionality reduction, by training the network to 
+ignore insignificant data ("noise").
+
+The two main applications of autoencoders are dimensionality reduction and 
+information retrieval.
+"""
+
+
 class autoencode_IR(torch.nn.Module):
     def __init__(self, d, latent_dim):
         super(autoencode_IR, self).__init__()

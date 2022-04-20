@@ -8,6 +8,27 @@ from sklearn.manifold import Isomap
 
 from data import load_data
 
+"""
+Isomap is a nonlinear dimensionality reduction method. It is a manifold 
+learning algorithm which tries to preserve the geodesic 
+distance between samples while reducing the dimension.
+Isomap starts by creating a neighborhood network. After that, it uses 
+graph distance to the approximate geodesic distance between all pairs of 
+points. And then, through eigenvalue decomposition of the geodesic distance 
+matrix, it finds the low dimensional embedding of the dataset. 
+In non-linear manifolds, the Euclidean metric for distance holds good if a
+nd only if neighborhood structure can be approximated as linear. If 
+neighborhood contains holes, then Euclidean distances can be highly 
+misleading. In contrast to this, if we measure the distance between two 
+points by following the manifold, we will have a better approximation of 
+how far or near two points are. Let's understand this with an extremely 
+simple 2-D example. Suppose our data lies on a circular manifold in a 
+2-D structure like in the image below.
+
+https://blog.paperspace.com/dimension-reduction-with-isomap/
+https://medium.com/data-science-in-your-pocket/dimension-reduction-using-isomap-72ead0411dec
+"""
+
 
 def cifar10_example():
     """

@@ -19,6 +19,10 @@ DEFAULT_CIFAR10_PATH = os.path.join(
     os.getcwd(), "data", "cifar10_data_batch_2.mat")
 DEFAULT_SPAM_PATH = os.path.join(
     os.getcwd(), "data", "spambase.data")
+DEFAULT_IR_FUNCTIONAL_X_PATH = os.path.join(
+    os.getcwd(), "data", "IR_MS_FUNCTIONAL_X.csv")
+DEFAULT_IR_FUNCTIONAL_y_PATH = os.path.join(
+    os.getcwd(), "data", "IR_MS_FUNCTIONAL_y.csv")
 
 
 def is_loader(object):
@@ -230,6 +234,53 @@ def load_swiss_roll(labels: bool = False, n_samples=1500, noise=0.0):
     return data, data_labels.squeeze()
 
 
+def load_ir_data(x_path: str = DEFAULT_IR_FUNCTIONAL_X_PATH,
+                 y_path: str = DEFAULT_IR_FUNCTIONAL_y_PATH,
+                 labels: bool = False):
+    """
+    The features vectors for the samples are stored in x_path
+    while the correspong labels are stored in y_path. Labels
+    and feature vectors will share the same index. For example the label for
+        IR_FUNCTIONAL_X[1412]
+    will be
+        IR_FUNCTIONAL_y[1412]
+
+    where each entry is a floating point value. The labels will take the form
+
+        [ FUNC_GRP_1 , FUNC_GRP_2 , ... , FUNC_GRP_N ]
+
+    where FUNC_GRP_i is a binary value indicating whether or not that 
+    functional group is present.
+
+    Parameters:
+        x_path (str):
+            A path string to a file containing the feature vectors. The
+            feature values should be stored across columns while the
+            samples should be stored across different rows.
+
+        y_path (str):
+            A path string to a file containing the label vectors. The
+            label values should be stored across columns while the
+            different samples should be stored across rows.
+    """
+    try:
+        IR_FUNCTIONAL_X = np.load(x_path.replace(
+            ".csv", ".npy")).astype(float)[:, :-500]
+    except (FileNotFoundError, OSError):
+        IR_FUNCTIONAL_X = np.loadtxt(x_path, dtype=float)[:, :-500]
+
+    if not labels:
+        return IR_FUNCTIONAL_X
+
+    try:
+        IR_FUNCTIONAL_y = np.load(y_path.replace(
+            ".csv", ".npy")).astype(int)
+    except (FileNotFoundError, OSError):
+        IR_FUNCTIONAL_y = np.loadtxt(y_path, dtype=int)
+
+    return IR_FUNCTIONAL_X, IR_FUNCTIONAL_y
+
+
 def load_data(data: str, path: str = None, labels: bool = False, **kwargs):
     """
     Loads the specified data set.
@@ -265,9 +316,9 @@ def load_data(data: str, path: str = None, labels: bool = False, **kwargs):
 def main():
 
     # Example of using the load_data function with the iris dataset
-    data, labels = load_data("iris", labels=True)
-    print(data)
-    print(labels)
+    data, labels = load_data("ir_data", labels=True)
+    # print(data)
+    # print(labels)
     print(data.shape)
     print(labels.shape)
 
