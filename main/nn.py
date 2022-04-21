@@ -26,30 +26,32 @@ def cifar10_example():
     n_classes = len(n_classes)
     # We shall build a neural network with 2 hidden layers, each with 100
     # nodes and with ReLu activation functions
-    hl1 = 100
-    hl2 = 100
+    hl1 = 200
+    # hl2 = 100
     # Create a list with the size of each layer
     torch_layers = (
         [torch.nn.Linear(d, hl1)]
-        + [torch.nn.LeakyReLU()]
-        + [torch.nn.Linear(hl1, hl2)]
-        + [torch.nn.LeakyReLU()]
+        + [torch.nn.Sigmoid()]
+        # + [torch.nn.Linear(hl1, hl2)]
+        # + [torch.nn.LeakyReLU()]
         # Add an output layer
-        + [torch.nn.Linear(hl2, n_classes)]
+        + [torch.nn.Linear(hl1, n_classes)]
     )
     # The Sequential function essentially constructs our model and returns it
     # as an object.
     nn_model = torch.nn.Sequential(*torch_layers)
+    print("Model Summary:")
+    print(nn_model)
     # The number of datapoints per batch that we do
-    batch_size = 64
+    batch_size = 128
     # The number of batches that we train on
     optimisation_steps = int(1e4)
     # Define a loss function to use for training
     criterion = torch.nn.CrossEntropyLoss(reduction='mean')
     # starting learning rate that we can tweak to increase performance
-    learning_rate = 1e-4
+    learning_rate = 1e-3
     # model.parameters gives the weight matrices and biases to the optimiser (AKA trainable parameters)
-    optimiser = torch.optim.SGD(nn_model.parameters(), lr=learning_rate)
+    optimiser = torch.optim.Adam(nn_model.parameters(), lr=learning_rate)
     metrics = {
         "iter": [],
         "loss": [],
