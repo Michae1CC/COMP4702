@@ -6,26 +6,6 @@ __version__ = ''
 import torch
 import torchvision.datasets as datasets
 import numpy as np
-import seaborn as sns
-from sklearn.manifold import TSNE
-from sklearn.svm import SVC
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import mean_squared_error
-import matplotlib.pyplot as plt
-
-from data import load_data
-
-
-def eval_model(X_train: np.array, y_train: np.array, X_test: np.array, y_test: np.array, gamma: float) -> float:
-    """
-    Evaluates the model with the provided values of gamma.
-    """
-    svc_model = SVC(kernel="rbf")
-    # svc_model = KNeighborsClassifier(n_neighbors=50, p=2)
-    svc_model.fit(X_train, y_train)
-    y_pred = svc_model.predict(X_test)
-    acc = float(sum(list(y_test == y_pred))) / len(y_test)
-    return acc
 
 
 def mnist_example():
