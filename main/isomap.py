@@ -9,6 +9,32 @@ from sklearn.manifold import Isomap
 from data import load_data
 
 """
+Isometric feature mapping (Isomap) (Tenenbaum, de Silva, and Langford
+2000) estimates this distance and applies multidimensional scaling (MDS)
+(section 6.5), using it for dimensionality reduction. Isomap uses the geodesic distances between all pairs of data points.
+For neighboring points that are close in the input space, Euclidean distance
+can be used; for small changes in pose, the manifold is locally
+linear. For faraway points, geodesic distance is approximated by the sum
+of the distances between the points along the way over the manifold.
+This is done by defining a graph whose nodes correspond to the N data
+points and whose edges connect neighboring points (those with distance
+less than some \eps or one of the n nearest) with weights corresponding
+to Euclidean distances. The geodesic distance between any two points is
+calculated as the length of the shortest path between the corresponding
+two nodes. For two points that are not close by, we need to hop over a
+number of intermediate points along the way, and therefore the distance
+will be the distance along the manifold, approximated as the sum of local
+Euclidean distances. It is clear that the graph distances provide a better approximation as
+the number of points increases, though there is the trade-off of longer
+execution time; if time is critical, one can subsample and use a subset
+of "landmark points" to make the algorithm faster.
+
+One problem with Isomap, as with MDS, is that it places the N points in
+a low-dimensional space, but it does not learn a generalmapping function
+that will allow mapping a new test point; the new point should be added
+to the dataset and the whole algorithm needs to be run once more using
+N + 1 instances.
+
 Isomap is a nonlinear dimensionality reduction method. It is a manifold 
 learning algorithm which tries to preserve the geodesic 
 distance between samples while reducing the dimension.
@@ -25,6 +51,7 @@ how far or near two points are. Let's understand this with an extremely
 simple 2-D example. Suppose our data lies on a circular manifold in a 
 2-D structure like in the image below.
 
+Alpaydin Chp 6.6
 https://blog.paperspace.com/dimension-reduction-with-isomap/
 https://medium.com/data-science-in-your-pocket/dimension-reduction-using-isomap-72ead0411dec
 """

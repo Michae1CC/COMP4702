@@ -19,7 +19,7 @@ def spam_example():
     logr_model.fit(data, labels)
     y_pred = logr_model.predict(data)
     acc = int(sum(list(labels == y_pred)))
-    print(f"Correctly predicted {acc}/{len(y_pred)}")
+    print(f"Correctly predicted {acc / len(y_pred)}")
     return
 
 
