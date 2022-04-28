@@ -19,10 +19,10 @@ DEFAULT_CIFAR10_PATH = os.path.join(
     os.getcwd(), "data", "cifar10_data_batch_2.mat")
 DEFAULT_SPAM_PATH = os.path.join(
     os.getcwd(), "data", "spambase.data")
-DEFAULT_IR_FUNCTIONAL_X_PATH = os.path.join(
-    os.getcwd(), "data", "IR_MS_FUNCTIONAL_X.csv")
-DEFAULT_IR_FUNCTIONAL_y_PATH = os.path.join(
-    os.getcwd(), "data", "IR_MS_FUNCTIONAL_y.csv")
+DEFAULT_PENGUINS_PATH = os.path.join(
+    os.getcwd(), "data", "penguins.csv")
+DEFAULT_BIKE_SHARING_PATH = os.path.join(
+    os.getcwd(), "data", "bike_sharing.csv")
 
 
 def is_loader(object):
@@ -172,6 +172,76 @@ def load_cifar10(path: str = DEFAULT_CIFAR10_PATH, labels: bool = False):
     return data, labels
 
 
+def load_penguin(path: str = DEFAULT_PENGUINS_PATH, labels: bool = False):
+    """
+    CLASSIFICATION
+
+    Loads a STANDARDIZED VERSION of the spam data set.
+
+    Source: https://github.com/mwaskom/seaborn-data/blob/master/penguins.csv
+    Number of Instances: 344
+    Number of Attributes: 7
+    Attribute Information (Raw):
+        species: penguin species (Chinstrap, Adélie, or Gentoo)
+        culmen_length_mm: culmen length (mm)
+        culmen_depth_mm: culmen depth (mm)
+        flipper_length_mm: flipper length (mm)
+        body_mass_g: body mass (g)
+        island: island name (Dream, Torgersen, or Biscoe) in the Palmer Archipelago (Antarctica)
+        sex: penguin sex
+    """
+    df = pd.read_csv(path)
+    labels_vec = df["species"].to_numpy(dtype=str)
+    df.drop(columns=["species"], inplace=True)
+    data = df.to_numpy()
+
+    if labels:
+        return data, labels_vec.squeeze()
+
+    return data
+
+
+def load_bike_sharing(path: str = DEFAULT_BIKE_SHARING_PATH, labels: bool = False):
+    """
+    REGRESSION
+
+    Source: https://archive.ics.uci.edu/ml/datasets/bike+sharing+dataset
+    Number of Instances: 17389
+    Number of Attributes: 16
+    Attribute Information (Raw):
+        - instant: record index
+        - dteday : date
+        - season : season (1:winter, 2:spring, 3:summer, 4:fall)
+        - yr : year (0: 2011, 1:2012)
+        - mnth : month ( 1 to 12)
+        - hr : hour (0 to 23)
+        - holiday : weather day is holiday or not (extracted from [Web Link])
+        - weekday : day of the week
+        - workingday : if day is neither weekend nor holiday is 1, otherwise is 0.
+        + weathersit :
+        - 1: Clear, Few clouds, Partly cloudy, Partly cloudy
+        - 2: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
+        - 3: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
+        - 4: Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog
+        - temp : Normalized temperature in Celsius. The values are derived via (t-t_min)/(t_max-t_min), t_min=-8, t_max=+39 (only in hourly scale)
+        - atemp: Normalized feeling temperature in Celsius. The values are derived via (t-t_min)/(t_max-t_min), t_min=-16, t_max=+50 (only in hourly scale)
+        - hum: Normalized humidity. The values are divided to 100 (max)
+        - windspeed: Normalized wind speed. The values are divided to 67 (max)
+        - casual: count of casual users
+        - registered: count of registered users
+        - cnt: count of total rental bikes including both casual and registered 
+    """
+    df = pd.read_csv(path)
+    labels_vec = df["cnt"].to_numpy(dtype=int)
+    df.drop(columns=["cnt"], inplace=True)
+    data = df.to_numpy()
+
+    if labels:
+        return data, labels_vec.squeeze()
+
+    return data
+
+
 def load_spam(path: str = DEFAULT_SPAM_PATH, labels: bool = False):
     """
     CLASSIFICATION
@@ -233,54 +303,6 @@ def load_swiss_roll(labels: bool = False, n_samples=1500, noise=0.0):
 
     return data, data_labels.squeeze()
 
-
-def load_ir_data(x_path: str = DEFAULT_IR_FUNCTIONAL_X_PATH,
-                 y_path: str = DEFAULT_IR_FUNCTIONAL_y_PATH,
-                 labels: bool = False):
-    """
-    The features vectors for the samples are stored in x_path
-    while the correspong labels are stored in y_path. Labels
-    and feature vectors will share the same index. For example the label for
-        IR_FUNCTIONAL_X[1412]
-    will be
-        IR_FUNCTIONAL_y[1412]
-
-    where each entry is a floating point value. The labels will take the form
-
-        [ FUNC_GRP_1 , FUNC_GRP_2 , ... , FUNC_GRP_N ]
-
-    where FUNC_GRP_i is a binary value indicating whether or not that 
-    functional group is present.
-
-    Parameters:
-        x_path (str):
-            A path string to a file containing the feature vectors. The
-            feature values should be stored across columns while the
-            samples should be stored across different rows.
-
-        y_path (str):
-            A path string to a file containing the label vectors. The
-            label values should be stored across columns while the
-            different samples should be stored across rows.
-    """
-    try:
-        IR_FUNCTIONAL_X = np.load(x_path.replace(
-            ".csv", ".npy")).astype(float)[:, :-500]
-    except (FileNotFoundError, OSError):
-        IR_FUNCTIONAL_X = np.loadtxt(x_path, dtype=float)[:, :-500]
-
-    if not labels:
-        return IR_FUNCTIONAL_X
-
-    try:
-        IR_FUNCTIONAL_y = np.load(y_path.replace(
-            ".csv", ".npy")).astype(int)
-    except (FileNotFoundError, OSError):
-        IR_FUNCTIONAL_y = np.loadtxt(y_path, dtype=int)
-
-    return IR_FUNCTIONAL_X, IR_FUNCTIONAL_y
-
-
 def load_data(data: str, path: str = None, labels: bool = False, **kwargs):
     """
     Loads the specified data set.
@@ -311,17 +333,3 @@ def load_data(data: str, path: str = None, labels: bool = False, **kwargs):
         return data_loader(labels=labels, **kwargs)
 
     return data_loader(path=path, labels=labels, **kwargs)
-
-
-def main():
-
-    # Example of using the load_data function with the iris dataset
-    data, labels = load_data("ir_data", labels=True)
-    # print(data)
-    # print(labels)
-    print(data.shape)
-    print(labels.shape)
-
-
-if __name__ == "__main__":
-    main()

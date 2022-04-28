@@ -33,8 +33,7 @@ Alpaydin Chp 6.6
 
 def cifar10_example():
     """
-    Examples of using PCA on the cifar10 data set. Similar to
-    week 6 assignment question.
+    Examples of using LDA on the cifar10 data set. 
     """
     X, y = load_data("cifar10", labels=True)
     # Normalize the data

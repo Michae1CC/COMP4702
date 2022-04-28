@@ -5,16 +5,13 @@ __version__ = ''
 
 import torch
 import numpy as np
-import seaborn as sns
-import matplotlib.pyplot as plt
 
 from data import load_data
 
 
 def cifar10_example():
     """
-    Examples of using neural networks on the cifar10 data set. Similar to
-    week 6 assignment question.
+    Examples of using neural networks on the cifar10 data set.
     """
     X, y = load_data("cifar10", labels=True)
     # Normalize the data

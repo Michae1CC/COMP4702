@@ -112,7 +112,7 @@ def swiss_roll_example():
 
 def main():
     cifar10_example()
-    # swiss_roll_example()
+    swiss_roll_example()
 
 
 if __name__ == "__main__":

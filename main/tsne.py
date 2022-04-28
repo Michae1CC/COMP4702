@@ -203,8 +203,7 @@ def swiss_roll_example():
 def swiss_roll_sklearn_example():
     """
     Examples of using tSNE on the swiss_roll data set using the sklearn 
-    function (much faster than the function provided by the paper). Similar to
-    the week 6 practical question. 
+    function (much faster than the function provided by the paper).
     """
     # Reduce the number of dimensions from 3 to 2.
     X, y = load_data("swiss_roll", labels=True, n_samples=1500, noise=0.0)

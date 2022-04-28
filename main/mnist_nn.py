@@ -10,8 +10,7 @@ import numpy as np
 
 def mnist_example():
     """
-    Examples of using neural networks on the cifar10 data set. Similar to
-    week 6 assignment question.
+    Examples of using neural networks on the cifar10 data set.
     """
     train_tensor = datasets.MNIST(root='./data', train=True, download=True)
     test_tensor = datasets.MNIST(root='./data', train=False, download=True)
