@@ -23,6 +23,8 @@ DEFAULT_IR_FUNCTIONAL_X_PATH = os.path.join(
     os.getcwd(), "data", "IR_MS_FUNCTIONAL_X.csv")
 DEFAULT_IR_FUNCTIONAL_y_PATH = os.path.join(
     os.getcwd(), "data", "IR_MS_FUNCTIONAL_y.csv")
+DEFAULT_PENGUINS_PATH = os.path.join(
+    os.getcwd(), "data", "penguins.csv")
 
 
 def is_loader(object):
@@ -170,6 +172,35 @@ def load_cifar10(path: str = DEFAULT_CIFAR10_PATH, labels: bool = False):
     labels = mat['labels'].astype(int).squeeze()
 
     return data, labels
+
+
+def load_penguin(path: str = DEFAULT_PENGUINS_PATH, labels: bool = False):
+    """
+    CLASSIFICATION
+
+    Loads a STANDARDIZED VERSION of the spam data set.
+
+    Source: https://github.com/mwaskom/seaborn-data/blob/master/penguins.csv
+    Number of Instances: 344
+    Number of Attributes: 7
+    Attribute Information (Raw):
+        species: penguin species (Chinstrap, Adélie, or Gentoo)
+        culmen_length_mm: culmen length (mm)
+        culmen_depth_mm: culmen depth (mm)
+        flipper_length_mm: flipper length (mm)
+        body_mass_g: body mass (g)
+        island: island name (Dream, Torgersen, or Biscoe) in the Palmer Archipelago (Antarctica)
+        sex: penguin sex
+    """
+    df = pd.read_csv(path)
+    labels_vec = df["species"].to_numpy(dtype=str)
+    df.drop(columns=["species"], inplace=True)
+    data = df.to_numpy()
+
+    if labels:
+        return data, labels_vec.squeeze()
+
+    return data
 
 
 def load_spam(path: str = DEFAULT_SPAM_PATH, labels: bool = False):

@@ -543,6 +543,7 @@ img
 results
 results.zip
 batch
+logs
 
 # End of https://www.toptal.com/developers/gitignore/api/haskell,python,latex,windows,macos,linux,vscode
 
