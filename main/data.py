@@ -25,6 +25,8 @@ DEFAULT_IR_FUNCTIONAL_y_PATH = os.path.join(
     os.getcwd(), "data", "IR_MS_FUNCTIONAL_y.csv")
 DEFAULT_PENGUINS_PATH = os.path.join(
     os.getcwd(), "data", "penguins.csv")
+DEFAULT_BIKE_SHARING_PATH = os.path.join(
+    os.getcwd(), "data", "bike_sharing.csv")
 
 
 def is_loader(object):
@@ -203,6 +205,47 @@ def load_penguin(path: str = DEFAULT_PENGUINS_PATH, labels: bool = False):
     return data
 
 
+def load_bike_sharing(path: str = DEFAULT_BIKE_SHARING_PATH, labels: bool = False):
+    """
+    REGRESSION
+
+    Source: https://archive.ics.uci.edu/ml/datasets/bike+sharing+dataset
+    Number of Instances: 17389
+    Number of Attributes: 16
+    Attribute Information (Raw):
+        - instant: record index
+        - dteday : date
+        - season : season (1:winter, 2:spring, 3:summer, 4:fall)
+        - yr : year (0: 2011, 1:2012)
+        - mnth : month ( 1 to 12)
+        - hr : hour (0 to 23)
+        - holiday : weather day is holiday or not (extracted from [Web Link])
+        - weekday : day of the week
+        - workingday : if day is neither weekend nor holiday is 1, otherwise is 0.
+        + weathersit :
+        - 1: Clear, Few clouds, Partly cloudy, Partly cloudy
+        - 2: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
+        - 3: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain + Scattered clouds
+        - 4: Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog
+        - temp : Normalized temperature in Celsius. The values are derived via (t-t_min)/(t_max-t_min), t_min=-8, t_max=+39 (only in hourly scale)
+        - atemp: Normalized feeling temperature in Celsius. The values are derived via (t-t_min)/(t_max-t_min), t_min=-16, t_max=+50 (only in hourly scale)
+        - hum: Normalized humidity. The values are divided to 100 (max)
+        - windspeed: Normalized wind speed. The values are divided to 67 (max)
+        - casual: count of casual users
+        - registered: count of registered users
+        - cnt: count of total rental bikes including both casual and registered 
+    """
+    df = pd.read_csv(path)
+    labels_vec = df["cnt"].to_numpy(dtype=int)
+    df.drop(columns=["cnt"], inplace=True)
+    data = df.to_numpy()
+
+    if labels:
+        return data, labels_vec.squeeze()
+
+    return data
+
+
 def load_spam(path: str = DEFAULT_SPAM_PATH, labels: bool = False):
     """
     CLASSIFICATION
@@ -347,7 +390,7 @@ def load_data(data: str, path: str = None, labels: bool = False, **kwargs):
 def main():
 
     # Example of using the load_data function with the iris dataset
-    data, labels = load_data("ir_data", labels=True)
+    data, labels = load_data("bike_sharing", labels=True)
     # print(data)
     # print(labels)
     print(data.shape)
