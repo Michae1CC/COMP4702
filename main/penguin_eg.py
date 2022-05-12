@@ -14,6 +14,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
 from data import load_data
+from exam_utils import true_vs_pred, graph_confusion_matrix, boxplots
 
 
 def penguin_rfc_example():
@@ -39,6 +40,15 @@ def penguin_rfc_example():
 
 
 def penguin_svm_example():
+    import os
+    DEFAULT_PENGUINS_PATH = os.path.join(
+        os.getcwd(), "data", "penguins.csv")
+    df = pd.read_csv(DEFAULT_PENGUINS_PATH)
+    df = df.dropna(axis=0)
+    boxplots(df, "species", ["bill_length_mm",
+             "bill_depth_mm", "flipper_length_mm", "body_mass_g"])
+    print(df)
+    return
     X, y = load_data("penguin", labels=True)
     # Remove the island, first column
     X = X[:, 1:]
@@ -69,12 +79,20 @@ def penguin_svm_example():
           accuracy_score(y_test, svc_model.predict(X_test)))
     print('Train acc:',
           accuracy_score(y_train, svc_model.predict(X_train)))
+
+    X = X_lda
+    y_pred_train = svc_model.predict(X_train)
+    y_pred_test = svc_model.predict(X_test)
+    # true_vs_pred(X, y, X_train, y_pred_train,
+    #              X_test, y_pred_test, reg=False, classes=le.classes_)
+
+    graph_confusion_matrix(y_test, y_pred_test, le.classes_)
     return
 
 
 def main():
     penguin_svm_example()
-    penguin_rfc_example()
+    # penguin_rfc_example()
 
 
 if __name__ == "__main__":

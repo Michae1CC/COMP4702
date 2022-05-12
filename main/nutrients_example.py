@@ -62,7 +62,6 @@ y = df["Energy, with dietary fibre"].to_numpy().astype(float)
 df.drop(columns=["Energy, with dietary fibre",
         "Energy, without dietary fibre"], inplace=True)
 x = df.to_numpy().astype(float)
-print(x.shape)
 
 # print(np.max(x), np.mean(y), np.min(y))
 # exit()
@@ -88,7 +87,25 @@ model = tf.keras.models.Sequential([
 
 model.compile(optimizer='adam', loss='mse', metrics=[
               tf.keras.metrics.MeanAbsoluteError()])
-model.fit(train_ds, epochs=1000, validation_data=test_ds)
+model.fit(train_ds, epochs=100, verbose=2, validation_data=test_ds)
+
+tf.keras.utils.plot_model(
+    model,
+    to_file=os.path.join(
+        os.getcwd(), "img", "nutrients_model.png"),
+    show_shapes=False,
+    show_dtype=False,
+    show_layer_names=True,
+    rankdir="TB",
+    expand_nested=False,
+    dpi=96,
+    layer_range=None,
+    show_layer_activations=False,
+)
+
+
+print(x.shape)
+print(np.min(y), np.max(y))
 
 # print(np.round(model.predict(X_test_np)))
 # print(y_test)

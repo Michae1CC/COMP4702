@@ -11,6 +11,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 
 from data import load_data
+from exam_utils import true_vs_pred
 
 DEFAULT_BIKE_SHARING_PATH = os.path.join(
     os.getcwd(), "data", "bike_sharing.csv")
@@ -58,5 +59,16 @@ model.compile(optimizer='adam', loss='mse', metrics=[
               tf.keras.metrics.MeanAbsoluteError()])
 model.fit(train_ds, epochs=8, validation_data=test_ds)
 
-print(np.round(model.predict(X_test_np)))
-print(y_test)
+cpm_model = PCA(n_components=2)
+X = x
+X_pca = cpm_model.fit_transform(x)
+X_train_pca = cpm_model.fit_transform(X_train_np)
+X_test_pca = cpm_model.fit_transform(X_test_np)
+y_pred_train = np.round(model.predict(X_train_np))
+y_pred_test = np.round(model.predict(X_test_np))
+
+true_vs_pred(X_pca, y, X_train_pca, y_pred_train,
+             X_test_pca, y_pred_test, reg=True)
+
+# print(np.round(model.predict(X_test_np)))
+# print(y_test)
