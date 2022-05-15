@@ -1,0 +1,59 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Lachaise Assignment
+% LaTeX Template
+% Version 1.1(26/6/2018)
+%
+% This template originates from:
+% http://www.LaTeXTemplates.com
+%
+% Authors:
+% Marion Lachaise & François Févotte
+% Vel (vel@LaTeXTemplates.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass{article}
+
+\input{structure.tex}
+
+\title{COMP4702: Final Exam} % Title of the assignment
+
+\author{Michael Ciccotosto-Camp\\ \texttt{s4430291}} % Author name and email address
+
+\date{University of Queensland --- \today}
+\begin{document}
+
+\maketitle % Print the title
+
+\section*{Data Edits Visualizations}
+
+\begin{itemize}
+    \item What changes where made to the dataset. Were rows/columns removed or edited? Why?
+    \item What any standardization/normalization performed?
+    \item Does the data look easy to separate when projected onto a lower dimension using PCA,TSNE, etc? How might this influence which model we use?
+    \item Graph the covariances between the data.
+\end{itemize}
+
+\section*{Model Selection}
+
+\begin{itemize}
+    \item What model was chosen? Explain why the selected model is suitable for the task at hand (eg its a good idea use SVC if a classification problem is given to us and all the inputs are continuous).
+    \item What parameters were selected? Were they adjusted/how?
+\end{itemize}
+
+\section*{Results}
+
+\begin{itemize}
+    \item For a classification problem, graph out a confusion matrix. How might the data projects onto lower dimensions explain confusion between certain classes. If two classes to closer together when projected onto a lower dimension, then there is a good chance that the model may mistake them.
+    \item Graph how the true outputs compare to the predicted outputs.
+    \item What other improvements to the model could be made if more time was allowed?
+\end{itemize}
+
+\end{document}
