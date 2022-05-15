@@ -88,6 +88,8 @@ def graph_scree(X):
 
     plt.tight_layout()
     plt.show()
+    plt.cla()
+    plt.clf()
     return
 
 
@@ -100,6 +102,8 @@ def graph_confusion_matrix(y_true, y_pred, classes):
     ax.set_yticklabels(classes)
     plt.tight_layout()
     plt.show()
+    plt.cla()
+    plt.clf()
     return
 
 
@@ -115,7 +119,101 @@ def boxplots(X, x, y):
         start_num += 1
     plt.tight_layout()
     plt.show()
+    plt.cla()
+    plt.clf()
+    return
 
+
+def covar_matrix(X, feats):
+
+    data = X[feats].to_numpy()
+    # print(data.shape)
+    pcc = np.corrcoef(data, rowvar=False)
+    # print(pcc)
+    grid_kws = {"height_ratios": (.9, .05), "hspace": .3}
+    f, (ax, cbar_ax) = plt.subplots(2, gridspec_kw=grid_kws)
+    ax = sns.heatmap(np.abs(pcc), ax=ax,
+                     cbar_ax=cbar_ax,
+                     cbar_kws={"orientation": "horizontal",
+                     'label': 'Variance'})
+    ax.set_title("Absolute Covariance")
+    ax.set_xticklabels(feats)
+    ax.set_yticklabels(feats, rotation=0, fontsize="10", va="center")
+    # plt.tight_layout()
+    plt.show()
+    plt.cla()
+    plt.clf()
+    return
+
+
+def plot_meteric(data, title, x_name, y_name):
+    fig = plt.gcf()
+    ax = plt.gca()
+    fig.set_size_inches(9, 6)
+    plt.style.use("fast")
+    sns.set_theme(style="whitegrid")
+    sns.set_style("whitegrid", {'grid.linestyle': '--'})
+    plt.yscale("log")
+    legends = []
+
+    for x, y, name in data:
+        plt.plot(x, y, marker="o", markersize=4, linewidth=1.7)
+        legends.append(name.replace('_', '-'))
+
+    ax.set_title(title, fontsize=16, fontweight="bold")
+    ax.set_xlabel(x_name, fontsize=16, fontweight="bold")
+    ax.set_ylabel(y_name, fontsize=16, fontweight="bold")
+    ax.tick_params(labelsize=14)
+    plt.grid(visible=True, which='major', color='black',
+             linestyle='-', alpha=0.3, linewidth=0.2)
+    plt.legend(legends, edgecolor="black")
+    plt.show()
+    plt.cla()
+    plt.clf()
+    return
+
+
+def graph_reduced_dimensions(X, y, encoder=None, reg=True, method="PCA"):
+    from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
+    from sklearn.decomposition import PCA
+    from sklearn.manifold import TSNE
+    fig = plt.gcf()
+    ax = plt.gca()
+    model = None
+    X_fitted = None
+    if method == "PCA":
+        model = PCA(n_components=2)
+        X_fitted = model.fit_transform(X)
+    elif method == "TSNE":
+        model = TSNE(n_components=2, init="random",
+                     perplexity=20.0, n_iter=1000, n_iter_without_progress=300)
+        X_fitted = model.fit_transform(X)
+    elif method == "LDA":
+        model = LDA(n_components=2)
+        X_fitted = model.fit_transform(X, y)
+    else:
+        raise NotImplementedError(f"No transformation method for {method:r}.")
+
+    ax.set_title(f"Projected data via {method}")
+    vmin, vmax = np.min(y), np.max(y)
+    if reg:
+        im = ax.scatter(X_fitted[:, 0], X_fitted[:, 1], c=y,
+                        cmap=plt.cm.Spectral, vmin=vmin, vmax=vmax,
+                        marker="D")
+        plt.colorbar(im, orientation="horizontal")
+    else:
+        n = len(np.unique(y))
+        legend = []
+        colors = sns.color_palette("hls", n)
+        for cls_, clr in zip(range(n), colors):
+            cls_fitted = X_fitted[y == cls_]
+            plt.scatter(cls_fitted[:, 0].squeeze(),
+                        cls_fitted[:, 1].squeeze(), s=20, alpha=0.9, color=clr)
+            legend.append(encoder.inverse_transform([cls_])[0])
+    plt.legend(legend)
+    plt.show()
+    plt.cla()
+    plt.clf()
     return
 
 

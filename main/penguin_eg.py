@@ -14,7 +14,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 
 from data import load_data
-from exam_utils import true_vs_pred, graph_confusion_matrix, boxplots
+from exam_utils import *
 
 
 def penguin_rfc_example():
@@ -45,10 +45,9 @@ def penguin_svm_example():
         os.getcwd(), "data", "penguins.csv")
     df = pd.read_csv(DEFAULT_PENGUINS_PATH)
     df = df.dropna(axis=0)
-    boxplots(df, "species", ["bill_length_mm",
-             "bill_depth_mm", "flipper_length_mm", "body_mass_g"])
-    print(df)
-    return
+    # covar_matrix(df, ["bill_length_mm",
+    #                   "bill_depth_mm", "flipper_length_mm", "body_mass_g"])
+    # return
     X, y = load_data("penguin", labels=True)
     # Remove the island, first column
     X = X[:, 1:]
@@ -66,6 +65,9 @@ def penguin_svm_example():
     print("Started LabelEncoder")
     le = LabelEncoder()
     y = le.fit_transform(y)
+
+    graph_reduced_dimensions(X_ss, y, encoder=le, reg=False, method="LDA")
+    return
 
     print("Started LDA")
     X_lda = LDA(n_components=2).fit_transform(X_ss, y)

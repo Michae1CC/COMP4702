@@ -11,6 +11,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 import warnings
 
+from exam_utils import *
+
 warnings.filterwarnings("ignore")
 # soldata = pd.read_csv('https://dataverse.harvard.edu/api/access/datafile/3407241?format=original&gbrecs=true')
 # had to rehost because dataverse isn't reliable
@@ -57,6 +59,15 @@ model = tf.keras.models.Sequential([
     tf.keras.layers.Dense(1)
 ])
 
+num_epochs = 30
 model.compile(optimizer='adam', loss='mse', metrics=[
               tf.keras.metrics.MeanAbsoluteError()])
-model.fit(train_ds, epochs=30, validation_data=test_ds)
+history = model.fit(train_ds, epochs=30, validation_data=test_ds)
+
+data = [
+    (np.arange(1, num_epochs + 1, 1, dtype=int),
+     history.history['mean_absolute_error'], "Training"),
+    (np.arange(1, num_epochs + 1, 1, dtype=int),
+     history.history['val_mean_absolute_error'], "Validation")
+]
+plot_meteric(data, "Model Absolute Error", "Epoch", "Mean Absolute Error")

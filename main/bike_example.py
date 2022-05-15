@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error
 
 from data import load_data
-from exam_utils import true_vs_pred
+from exam_utils import *
 
 DEFAULT_BIKE_SHARING_PATH = os.path.join(
     os.getcwd(), "data", "bike_sharing.csv")
@@ -35,6 +35,8 @@ df["dteday"] = cols.to_numpy(dtype=int)
 df[["temp", "atemp", "hum", "windspeed"]] = StandardScaler(
 ).fit_transform(df[["temp", "atemp", "hum", "windspeed"]].to_numpy())
 x = df.to_numpy()
+graph_reduced_dimensions(x, y, reg=True, method="PCA")
+exit()
 X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
     x, y, test_size=0.2)
 n, d = X_train_np.shape
@@ -55,9 +57,10 @@ model = tf.keras.models.Sequential([
     tf.keras.layers.Dense(1)
 ])
 
+num_epochs = 10 * 3
 model.compile(optimizer='adam', loss='mse', metrics=[
               tf.keras.metrics.MeanAbsoluteError()])
-model.fit(train_ds, epochs=8, validation_data=test_ds)
+history = model.fit(train_ds, epochs=num_epochs, validation_data=test_ds)
 
 cpm_model = PCA(n_components=2)
 X = x
@@ -67,8 +70,25 @@ X_test_pca = cpm_model.fit_transform(X_test_np)
 y_pred_train = np.round(model.predict(X_train_np))
 y_pred_test = np.round(model.predict(X_test_np))
 
-true_vs_pred(X_pca, y, X_train_pca, y_pred_train,
-             X_test_pca, y_pred_test, reg=True)
+print(history.history.keys())
+# data = [
+#     (np.arange(1, num_epochs + 1, 1, dtype=int),
+#      history.history['loss'], "Training"),
+#     (np.arange(1, num_epochs + 1, 1, dtype=int),
+#      history.history['val_loss'], "Validation")
+# ]
+# plot_meteric(data, "Model Loss", "Epoch", "Loss")
+
+data = [
+    (np.arange(1, num_epochs + 1, 1, dtype=int),
+     history.history['mean_absolute_error'], "Training"),
+    (np.arange(1, num_epochs + 1, 1, dtype=int),
+     history.history['val_mean_absolute_error'], "Validation")
+]
+plot_meteric(data, "Model Absolute Error", "Epoch", "Mean Absolute Error")
+
+# true_vs_pred(X_pca, y, X_train_pca, y_pred_train,
+#              X_test_pca, y_pred_test, reg=True)
 
 # print(np.round(model.predict(X_test_np)))
 # print(y_test)
