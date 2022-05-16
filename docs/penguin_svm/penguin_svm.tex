@@ -1,0 +1,124 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Lachaise Assignment
+% LaTeX Template
+% Version 1.1(26/6/2018)
+%
+% This template originates from:
+% http://www.LaTeXTemplates.com
+%
+% Authors:
+% Marion Lachaise & François Févotte
+% Vel (vel@LaTeXTemplates.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass{article}
+
+\input{structure.tex}
+
+\title{COMP4702: 2021 Final Exam} % Title of the assignment
+
+\author{Michael Ciccotosto-Camp\\ \texttt{s4430291}} % Author name and email address
+
+\date{University of Queensland --- \today}
+\begin{document}
+
+\maketitle % Print the title
+
+% \section*{Data Edits Visualizations}
+
+% \begin{itemize}
+%     \item What changes where made to the dataset. Were rows/columns removed or edited? Why?
+%     \item What any standardization/normalization performed?
+%     \item Does the data look easy to separate when projected onto a lower dimension using PCA,TSNE, etc? How might this influence which model we use?
+%     \item Graph the covariances between the data.
+% \end{itemize}
+
+To start rows that contained Nan values where removed from the data set so that all the features could be utilized for prediction. Columns with non-numerical (i.e species, island and sex) where numerical encoded using sklearns label encoder. Next the "island" column was drop as this. To justify this notice the spree graph before and after the "island" column is dropped.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{scree_island.png}
+    \caption{SPREE graph with island retained}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{scree_no_island.png}
+    \caption{SPREE graph with island removed}
+\end{figure}
+
+The fact that the importance weighting of principal components remains relatively unaffected indicates the island feature contributed very little information. Another thing to notice is that the vast majority of importance weighting in the spree graph resides in the first principal component. This suggests that the data undergo further dimensionality reduction without too much feature information loss. This is supported by the fact that there are a number of correlations depicted in the boxplots and covariance matrix.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.6]{bp_1.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.6]{bp_2.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.4]{cov_feat_mat.png}
+    \caption{Covariance matrix between continuous features}
+\end{figure}
+
+A number of dimensionality reduction techniques were used project the data onto a 2-dimensional to see how well they separate out the data. Each feature was standardized before hand so that the dimensionality reduction techniques so that no feature had a information retention weighting. The techniques used were PCA, TSNE and LDA. The results are presented below.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{projection_PCA.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{projection_TSNE.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{projection_LDA.png}
+\end{figure}
+
+TSNE was chosen to be the preferred method for dimensionality reduction since it seemed to provide the best separation between classes and seems to also provide separation between genders (which was not really being tested here, but was still interesting).
+
+% \section*{Model Selection}
+
+% \begin{itemize}
+%     \item What model was chosen? Explain why the selected model is suitable for the task at hand (eg its a good idea use SVC if a classification problem is given to us and all the inputs are continuous).
+%     \item What parameters were selected? Were they adjusted/how?
+% \end{itemize}
+
+An SVM model was chosen since SVMs are designed to perform classification tasks on continuous inputs. The RBF kernel was used as the kernel parameter since, when looking at the TSNE projection, each cluster vaguely resembles a circle where it becomes more and more unlikely to find samples belong to that cluster the further you are from the clusters centre. The default length parameter of the kernel was used. The result for the SVM model comparing true labels and predicted labels and the confusion matrix are presented below.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{true_vs_pred.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{confusion_mat.png}
+\end{figure}
+
+As we can see the model was mostly very successfully although, from the confusion matrix, we can see that one misclassification was made between the Chinstrap and Adelie species. This is sort of expected since, in the TSNE graph we see that one Chinstrap is very close to a Adelie cluster centre.
+
+% \section*{Results}
+
+% \begin{itemize}
+%     \item For a classification problem, graph out a confusion matrix. How might the data projects onto lower dimensions explain confusion between certain classes. If two classes to closer together when projected onto a lower dimension, then there is a good chance that the model may mistake them.
+%     \item Graph how the true outputs compare to the predicted outputs.
+%     \item What other improvements to the model could be made if more time was allowed?
+% \end{itemize}
+
+\end{document}
