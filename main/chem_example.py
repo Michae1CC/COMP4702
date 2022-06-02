@@ -62,7 +62,7 @@ model = tf.keras.models.Sequential([
 num_epochs = 30
 model.compile(optimizer='adam', loss='mse', metrics=[
               tf.keras.metrics.MeanAbsoluteError()])
-history = model.fit(train_ds, epochs=30, validation_data=test_ds)
+history = model.fit(train_ds, epochs=num_epochs, validation_data=test_ds)
 
 data = [
     (np.arange(1, num_epochs + 1, 1, dtype=int),

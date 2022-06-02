@@ -35,8 +35,8 @@ df["dteday"] = cols.to_numpy(dtype=int)
 df[["temp", "atemp", "hum", "windspeed"]] = StandardScaler(
 ).fit_transform(df[["temp", "atemp", "hum", "windspeed"]].to_numpy())
 x = df.to_numpy()
-graph_reduced_dimensions(x, y, reg=True, method="PCA")
-exit()
+# graph_reduced_dimensions(x, y, reg=True, method="PCA")
+# exit()
 X_train_np, X_test_np, y_train_np, y_test_np = train_test_split(
     x, y, test_size=0.2)
 n, d = X_train_np.shape
@@ -50,23 +50,33 @@ train_ds = tf.data.Dataset.from_tensor_slices(
     (X_train, y_train)).shuffle(10000).batch(32)
 
 test_ds = tf.data.Dataset.from_tensor_slices((X_test, y_test)).batch(32)
+num_epochs = 10 * 3
 
-model = tf.keras.models.Sequential([
+layers = [
     tf.keras.layers.Dense(d, activation='relu'),
     tf.keras.layers.Dense(8, activation='relu'),
     tf.keras.layers.Dense(1)
-])
+]
 
-num_epochs = 10 * 3
-model.compile(optimizer='adam', loss='mse', metrics=[
-              tf.keras.metrics.MeanAbsoluteError()])
+comp_args = {
+    "optimizer": "adam",
+    "loss": "mse",
+    "metrics": [tf.keras.metrics.MeanAbsoluteError()]
+}
+
+plot_lr_errors(x, y, layers, comp_args, num_epochs)
+
+exit()
+model = tf.keras.models.Sequential(layers)
+
+model.compile(**comp_args)
 history = model.fit(train_ds, epochs=num_epochs, validation_data=test_ds)
 
 cpm_model = PCA(n_components=2)
 X = x
 X_pca = cpm_model.fit_transform(x)
-X_train_pca = cpm_model.fit_transform(X_train_np)
-X_test_pca = cpm_model.fit_transform(X_test_np)
+X_train_pca = cpm_model.transform(X_train_np)
+X_test_pca = cpm_model.transform(X_test_np)
 y_pred_train = np.round(model.predict(X_train_np))
 y_pred_test = np.round(model.predict(X_test_np))
 

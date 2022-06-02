@@ -4,6 +4,7 @@ __author__ = 'Michael Ciccotosto-Camp'
 __version__ = ''
 
 import os
+import torch
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -13,9 +14,50 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 
+def drop_high_nan(df, prop=0.2):
+    """
+    Drops columns from a dataframe with a high proportion of Nan values.
+
+    Parameters:
+        df:
+            A pandas Dataframe which we would like to clean.
+
+        prop:
+            The the threshold proportion to drop a row from the df.
+    """
+    n, _ = df.shape
+    to_drop = []
+
+    for col in df.columns:
+        num_nans = (df[col]).isna().sum()
+        if num_nans / n > prop:
+            to_drop.append(col)
+
+    df.drop(columns=to_drop, inplace=True)
+    return
+
+
 def true_vs_pred(X, y, X_train, y_train_pred, X_test, y_test_pred, reg=True, save_path=None, classes=None):
     """
     Graphs true values of y along side predictions.
+
+    Parameters:
+        X:
+            A 2-row numpy representation of the entire dataset.
+        y:
+            A numpy vector of true outputs.
+        X_train:
+            A 2-row numpy representation of the training data.
+        y_train_pred:
+            A numpy vector contain predictions for the testing dataset.
+        X_test:
+            A 2-row numpy representation of the testing data.
+        y_test_pred:
+            A numpy vector contain predictions for the testing dataset.
+        reg:
+            Keep true if this was a regression task, set to false otherwise.
+        classes:
+            A list or ordered classess for regression.
     """
 
     fig = plt.figure()
@@ -74,7 +116,119 @@ def true_vs_pred(X, y, X_train, y_train_pred, X_test, y_test_pred, reg=True, sav
     return
 
 
+def CV_heatmap_sklearn(model, X, y, feat_1, feat_2, feat_1_range, feat_2_range, m_args=tuple(), m_kwargs={}):
+    """
+    Produces a heat map for gridsearching along various hyperparameters. Using
+    CV.
+
+    Parameters:
+        model:
+            A callable to create an instance of the desired model, eg svm.SVC.
+        X:
+            A numpy matrix containing input vectors.
+        y:
+            A numpy array containing output vectors.
+        feat_1:
+            The name of the first feature to search for as a string, eg the 
+            "gamma" for the svm.SVC model.
+        feat_2:
+            The name of the second feature to search for as a string.
+        feat_1_range:
+            The range of (iterable) values to search over for the first 
+            feature, eg [1e-1,1e-0,1e1].
+        feat_2_range:
+            The range of (iterable) values to search over for the second feature.
+    """
+    from sklearn.model_selection import cross_val_score
+    acc = np.empty((len(feat_1_range), len(feat_2_range)))
+
+    for f1i, feat_1_val in enumerate(feat_1_range):
+        for f2i, feat_2_val in enumerate(feat_2_range):
+            m_kwargs[feat_1] = feat_1_val
+            m_kwargs[feat_2] = feat_2_val
+            clf = model(*m_args, **m_kwargs)
+            scores = cross_val_score(clf, X, y, cv=5)
+            acc[f1i, f2i] = np.mean(scores)
+
+    grid_kws = {"height_ratios": (.9, .05), "hspace": .3}
+    f, (ax, cbar_ax) = plt.subplots(2, gridspec_kw=grid_kws)
+    ax = sns.heatmap(np.abs(acc), ax=ax,
+                     annot=True,
+                     fmt='.3f',
+                     cmap="plasma_r",
+                     cbar_ax=cbar_ax,
+                     cbar_kws={"orientation": "horizontal",
+                     'label': 'Accuracy'})
+    ax.set_title("HyperParam Tuning", fontsize=16, fontweight="bold")
+    ax.set_xticklabels(
+        list(map(lambda x: float("{:.4f}".format(x)), list(feat_2_range))))
+    ax.set_yticklabels(
+        list(map(lambda x: float("{:.4f}".format(x)), list(feat_1_range))),
+        rotation=0, va="center")
+    ax.set_xlabel(feat_2.title(), fontsize=14, fontweight="bold")
+    ax.set_ylabel(feat_1.title(), fontsize=14, fontweight="bold")
+    # plt.tight_layout()
+    plt.show()
+    plt.cla()
+    plt.clf()
+    return
+
+
+def CV_onevar_sklearn(model, X, y, feat, feat_range, m_args=tuple(), m_kwargs={}):
+    """
+    Produces a heat map for gridsearching along various hyperparameters. Using
+    CV.
+
+    Parameters:
+        model:
+            A callable to create an instance of the desired model, eg svm.SVC.
+        X:
+            A numpy matrix containing input vectors.
+        y:
+            A numpy array containing output vectors.
+        feat:
+            The name of the feature to search for as a string, eg the
+            "gamma" for the svm.SVC model.
+        feat_range:
+            The range of (iterable) values to search over for the first
+            feature, eg [1e-1,1e-0,1e1].
+    """
+    from sklearn.model_selection import cross_val_score
+    acc = np.empty(len(feat_range))
+
+    for f1i, feat_val in enumerate(feat_range):
+        m_kwargs[feat] = feat_val
+        clf = model(*m_args, **m_kwargs)
+        scores = cross_val_score(clf, X, y, cv=5)
+        acc[f1i] = np.mean(scores)
+
+    plot_meteric([(feat_range.squeeze(), acc.squeeze(), feat)], f"CV on {feat}",
+                 "Value", "Accuracy")
+
+    # grid_kws = {"height_ratios": (.9, .05), "hspace": .3}
+    # f, (ax, cbar_ax) = plt.subplots(2, gridspec_kw=grid_kws)
+    # ax = sns.plot(np.abs(acc), ax=ax,
+    #                  annot=True,
+    #                  cmap="plasma_r",
+    #                  cbar_ax=cbar_ax,
+    #                  cbar_kws={"orientation": "horizontal",
+    #                  'label': 'Accuracy'})
+    # ax.set_title("HyperParam Tuning", fontsize=16, fontweight="bold")
+    # ax.set_yticklabels(
+    #     list(map(lambda x: float("{:.4f}".format(x)), list(feat_range))),
+    #     rotation=0, va="center")
+    # ax.set_ylabel(feat.title(), fontsize=14, fontweight="bold")
+    # # plt.tight_layout()
+    # plt.show()
+    # plt.cla()
+    # plt.clf()
+    return
+
+
 def graph_scree(X):
+    """
+    Plots the scree graph of the provided matrix.
+    """
     _, s, _ = np.linalg.svd(X)
     plt.style.use('seaborn-deep')
     plt.figure(figsize=(9, 6))
@@ -107,16 +261,39 @@ def graph_confusion_matrix(y_true, y_pred, classes):
     return
 
 
-def boxplots(X, x, y):
+def boxplots(X, x, y=None):
+    """
+    Plots various attributes/columns in a box plot format from a specified
+    dataframe.
+
+    Parameters:
+        X:
+            The project dataframe.
+        x:
+            The names of rows for variables to graph.
+        y:
+            The class row name (classification only).
+    """
     sns.set_theme(style="ticks")
-    n = len(y)
+    if y is None:
+        n = len(x)
+    else:
+        n = len(y)
     start_num = 0
+    # fig, axes = plt.subplots(1, n, sharey=True)
     fig, axes = plt.subplots(1, n)
-    for y_ in y:
-        g = sns.boxplot(ax=axes[start_num], x=x, y=y_,
-                        data=X
-                        )
-        start_num += 1
+    if y is None:
+        for x_ in x:
+            g = sns.boxplot(ax=axes[start_num], y=x_,
+                            data=X
+                            )
+            start_num += 1
+    else:
+        for y_ in y:
+            g = sns.boxplot(ax=axes[start_num], x=x, y=y_,
+                            data=X
+                            )
+            start_num += 1
     plt.tight_layout()
     plt.show()
     plt.cla()
@@ -125,7 +302,10 @@ def boxplots(X, x, y):
 
 
 def covar_matrix(X, feats):
-
+    """
+    Graphs the covariance matrix of a data set where the features are stored
+    in the rows of a pandas dataframe.
+    """
     data = X[feats].to_numpy()
     # print(data.shape)
     pcc = np.corrcoef(data, rowvar=False)
@@ -133,6 +313,8 @@ def covar_matrix(X, feats):
     grid_kws = {"height_ratios": (.9, .05), "hspace": .3}
     f, (ax, cbar_ax) = plt.subplots(2, gridspec_kw=grid_kws)
     ax = sns.heatmap(np.abs(pcc), ax=ax,
+                     annot=True,
+                     cmap="plasma_r",
                      cbar_ax=cbar_ax,
                      cbar_kws={"orientation": "horizontal",
                      'label': 'Variance'})
@@ -146,14 +328,31 @@ def covar_matrix(X, feats):
     return
 
 
-def plot_meteric(data, title, x_name, y_name):
+def plot_meteric(data, title, x_name, y_name, log_x=False, log_y=False):
+    """
+    Plots a line graph of a provided meteric.
+
+    Parameters:
+        data:
+            A list of tuples containing the following information.
+            (x, y, legend name).
+        title:
+            The title of the graph.
+        x_name:
+            The x-axis name.
+        y_name:
+            The y-axis name.
+    """
     fig = plt.gcf()
     ax = plt.gca()
     fig.set_size_inches(9, 6)
     plt.style.use("fast")
     sns.set_theme(style="whitegrid")
     sns.set_style("whitegrid", {'grid.linestyle': '--'})
-    plt.yscale("log")
+    if log_y:
+        plt.yscale("log")
+    if log_x:
+        plt.xscale("log")
     legends = []
 
     for x, y, name in data:
@@ -174,6 +373,20 @@ def plot_meteric(data, title, x_name, y_name):
 
 
 def graph_reduced_dimensions(X, y, encoder=None, reg=True, method="PCA"):
+    """
+    Reduces the dimensionality of the data using one of the dimensionality
+    reduction techniques discussed in the course and graphs it on a 2-D grid.
+
+    Parameters:
+        X:
+            The data (with features in different columns) as a numpy array.
+        y:
+            The true outputs as a numpy vector (transformed).
+        reg:
+            Keep true if this was a regression task, set to false otherwise.
+        method:
+            The method used to used to reduce the dimensionality of the data.
+    """
     from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
     from sklearn.decomposition import PCA
     from sklearn.manifold import TSNE
@@ -186,7 +399,7 @@ def graph_reduced_dimensions(X, y, encoder=None, reg=True, method="PCA"):
         X_fitted = model.fit_transform(X)
     elif method == "TSNE":
         model = TSNE(n_components=2, init="random",
-                     perplexity=20.0, n_iter=1000, n_iter_without_progress=300)
+                     perplexity=20.0, n_iter=5000, n_iter_without_progress=300)
         X_fitted = model.fit_transform(X)
     elif method == "LDA":
         model = LDA(n_components=2)
@@ -214,6 +427,42 @@ def graph_reduced_dimensions(X, y, encoder=None, reg=True, method="PCA"):
     plt.show()
     plt.cla()
     plt.clf()
+    return
+
+
+def plot_lr_errors(X, y, layers, comp_args, num_epochs=100):
+
+    import tensorflow as tf
+    from sklearn.model_selection import KFold
+
+    # Define a number of learning rates to test
+    lrs = np.logspace(-5, 2, 7, base=10)
+
+    kf = KFold(n_splits=5)
+    lr_errs = []
+    for lr in lrs:
+        errs = []
+        for train_index, test_index in kf.split(X):
+            X_train_np, X_test_np, y_train_np, y_test_np = X[
+                train_index], X[test_index], y[train_index], y[test_index]
+            X_train = torch.tensor(X_train_np)
+            X_test = torch.tensor(X_test_np)
+            y_train = torch.tensor(y_train_np)
+            y_test = torch.tensor(y_test_np)
+            train_ds = tf.data.Dataset.from_tensor_slices(
+                (X_train, y_train)).shuffle(10000).batch(32)
+            test_ds = tf.data.Dataset.from_tensor_slices(
+                (X_test, y_test)).batch(32)
+            model = tf.keras.models.Sequential(layers)
+            comp_args["optimizer"] = tf.keras.optimizers.Adam(learning_rate=lr)
+            model.compile(**comp_args)
+            history = model.fit(train_ds, epochs=num_epochs,
+                                validation_data=test_ds, verbose=0)
+            errs.append(float(history.history['val_accuracy'][-1]))
+        lr_errs.append(np.mean(errs))
+
+    plot_meteric([(lrs, lr_errs, "lr")], "", "Learning Rate",
+                 "Accuracy", log_x=True)
     return
 
 
