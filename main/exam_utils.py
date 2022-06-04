@@ -4,6 +4,7 @@ __author__ = 'Michael Ciccotosto-Camp'
 __version__ = ''
 
 import os
+from sklearn.metrics import accuracy_score, mean_squared_error
 import torch
 import pandas as pd
 import numpy as np
@@ -34,6 +35,30 @@ def drop_high_nan(df, prop=0.2):
             to_drop.append(col)
 
     df.drop(columns=to_drop, inplace=True)
+    return
+
+
+def plot_cls_dist(y, labels):
+    """
+    Counts the number of occurrences of each class.
+    """
+    y_counts = np.bincount(y)
+    df = {
+        "Classes": labels,
+        "Counts": y_counts,
+    }
+    df = pd.DataFrame(df)
+    ax = sns.barplot(x="Classes", y="Counts", data=df, capsize=.1,
+                     linewidth=2.5, ci=None, edgecolor="black", fill=True)
+    ax.set_title("Class Count Distribution", fontsize=16, fontweight="bold")
+    ax.set_xlabel("Classes", fontsize=14, fontweight="bold")
+    ax.set_ylabel("Counts", fontsize=14, fontweight="bold")
+    plt.tight_layout()
+    plt.show()
+    # plt.savefig(os.path.join(save_dir, settings["save_name"]))
+    plt.cla()
+    plt.clf()
+
     return
 
 
@@ -251,9 +276,11 @@ def graph_confusion_matrix(y_true, y_pred, classes):
     from sklearn.metrics import confusion_matrix
     plt.title("Confusion Matrix")
     conf_mat = confusion_matrix(y_true, y_pred)
-    ax = sns.heatmap(conf_mat, annot=True, fmt="d")
+    ax = sns.heatmap(conf_mat, annot=True, fmt="d", cmap="inferno_r")
     ax.set_xticklabels(classes)
     ax.set_yticklabels(classes)
+    ax.set_xlabel("Predicted")
+    ax.set_ylabel("Actual")
     plt.tight_layout()
     plt.show()
     plt.cla()
@@ -301,12 +328,16 @@ def boxplots(X, x, y=None):
     return
 
 
-def covar_matrix(X, feats):
+def covar_matrix(X, feats=None):
     """
     Graphs the covariance matrix of a data set where the features are stored
     in the rows of a pandas dataframe.
     """
-    data = X[feats].to_numpy()
+    if feats is not None:
+        data = X[feats].to_numpy()
+    else:
+        data = X
+        n, d = X.shape
     # print(data.shape)
     pcc = np.corrcoef(data, rowvar=False)
     # print(pcc)
@@ -317,10 +348,11 @@ def covar_matrix(X, feats):
                      cmap="plasma_r",
                      cbar_ax=cbar_ax,
                      cbar_kws={"orientation": "horizontal",
-                     'label': 'Variance'})
+                     'label': 'Covariance'})
     ax.set_title("Absolute Covariance")
-    ax.set_xticklabels(feats)
-    ax.set_yticklabels(feats, rotation=0, fontsize="10", va="center")
+    if feats is not None:
+        ax.set_xticklabels(feats)
+        ax.set_yticklabels(feats, rotation=0, fontsize="10", va="center")
     # plt.tight_layout()
     plt.show()
     plt.cla()
@@ -389,11 +421,12 @@ def graph_reduced_dimensions(X, y, encoder=None, reg=True, method="PCA"):
     """
     from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
     from sklearn.decomposition import PCA
-    from sklearn.manifold import TSNE
+    from sklearn.manifold import TSNE, Isomap
     fig = plt.gcf()
     ax = plt.gca()
     model = None
     X_fitted = None
+    method = method.upper()
     if method == "PCA":
         model = PCA(n_components=2)
         X_fitted = model.fit_transform(X)
@@ -404,10 +437,15 @@ def graph_reduced_dimensions(X, y, encoder=None, reg=True, method="PCA"):
     elif method == "LDA":
         model = LDA(n_components=2)
         X_fitted = model.fit_transform(X, y)
+    elif method == "ISO":
+        model = Isomap(n_components=2)
+        X_fitted = model.fit_transform(X, y)
     else:
         raise NotImplementedError(f"No transformation method for {method:r}.")
 
-    ax.set_title(f"Projected data via {method}")
+    method_name = method.title()
+    method_name = "Isomapping" if method == "ISO" else method_name
+    ax.set_title(f"Projected data via {method_name}")
     vmin, vmax = np.min(y), np.max(y)
     if reg:
         im = ax.scatter(X_fitted[:, 0], X_fitted[:, 1], c=y,
@@ -463,6 +501,66 @@ def plot_lr_errors(X, y, layers, comp_args, num_epochs=100):
 
     plot_meteric([(lrs, lr_errs, "lr")], "", "Learning Rate",
                  "Accuracy", log_x=True)
+    return
+
+
+def plot_final_errors(X, y, layers, comp_args, num_epochs=100, reg=True):
+
+    import tensorflow as tf
+    from sklearn.model_selection import KFold
+    from tabulate import tabulate
+
+    kf = KFold(n_splits=5)
+    n_reps = 10
+    train_preds = []
+    test_preds = []
+    for _ in range(n_reps):
+        train_pred = []
+        test_pred = []
+        for train_index, test_index in kf.split(X):
+            X_train_np, X_test_np, y_train_np, y_test_np = X[
+                train_index], X[test_index], y[train_index], y[test_index]
+            X_train = torch.tensor(X_train_np)
+            X_test = torch.tensor(X_test_np)
+            y_train = torch.tensor(y_train_np)
+            y_test = torch.tensor(y_test_np)
+            train_ds = tf.data.Dataset.from_tensor_slices(
+                (X_train, y_train)).shuffle(10000).batch(32)
+            test_ds = tf.data.Dataset.from_tensor_slices(
+                (X_test, y_test)).batch(32)
+            model = tf.keras.models.Sequential(layers)
+            model.compile(**comp_args)
+            history = model.fit(train_ds, epochs=num_epochs,
+                                validation_data=test_ds, verbose=0)
+
+            if reg:
+                train_pred.append(mean_squared_error(
+                    np.round(model.predict(X_train_np)), y_train_np))
+                test_pred.append(mean_squared_error(
+                    np.round(model.predict(X_test_np)), y_test_np))
+            else:
+                train_pred.append(accuracy_score(
+                    np.round(model.predict(X_train_np)), y_train_np))
+                test_pred.append(accuracy_score(
+                    np.round(model.predict(X_test_np)), y_test_np))
+        train_preds.append(np.mean(train_pred))
+        test_preds.append(np.mean(test_pred))
+
+    if reg:
+        df = {
+            "Repetition": list(range(1, n_reps + 1)),
+            "Train MSE": train_preds,
+            "Test MSE": test_preds,
+        }
+    else:
+        df = {
+            "Repetition": list(range(1, n_reps + 1)),
+            "Train Acc": train_preds,
+            "Test Acc": test_preds,
+        }
+
+    print(tabulate(df, headers="keys", tablefmt="latex"))
+
     return
 
 

@@ -33,18 +33,20 @@ def load_iono_data():
     y = df.iloc[:, -1].to_numpy(dtype=int)
     # print(X)
     # print(y)
+    # plot_cls_dist(y, out_le.classes_)
+    # covar_matrix(X)
 
     return X, y, out_le
 
 
 def check_dim_reduction():
     X, y, out_le = load_iono_data()
-    graph_scree(X)
-    # graph_reduced_dimensions(
-    #     X,
-    #     y,
-    #     encoder=out_le, reg=False, method="TSNE"
-    # )
+    # graph_scree(X)
+    graph_reduced_dimensions(
+        X,
+        y,
+        encoder=out_le, reg=False, method="ISO"
+    )
     return
 
 
@@ -59,12 +61,13 @@ def use_LG_model():
     #                    )
     X_train, X_test, y_train, y_test = train_test_split(
         X_tsne, y, test_size=0.2)
-    svc_model = LogisticRegression(C=0.0081, tol=0.01)
+    svc_model = LogisticRegression(C=0.0007, tol=0.01)
     svc_model.fit(X_train, y_train)
     y_pred_train = svc_model.predict(X_train)
     y_pred_test = svc_model.predict(X_test)
-    true_vs_pred(X_tsne, y, X_train, y_pred_train,
-                 X_test, y_pred_test, reg=False, classes=out_le.classes_)
+    # true_vs_pred(X_tsne, y, X_train, y_pred_train,
+    #              X_test, y_pred_test, reg=False, classes=out_le.classes_)
+    graph_confusion_matrix(y_test, y_pred_test, out_le.classes_)
 
 
 def use_NN_model():
@@ -84,12 +87,12 @@ def use_NN_model():
         (X_train, y_train)).shuffle(10000).batch(32)
 
     test_ds = tf.data.Dataset.from_tensor_slices((X_test, y_test)).batch(32)
-    num_epochs = 200
+    num_epochs = 100
 
     layers = [
         tf.keras.layers.Dense(d, activation='relu'),
         tf.keras.layers.Dense(6, activation='relu'),
-        tf.keras.layers.Dense(1)
+        tf.keras.layers.Dense(1, activation="sigmoid"),
     ]
 
     comp_args = {
@@ -131,6 +134,10 @@ def use_NN_model():
     y_pred_test = np.round(model.predict(X_test_np))
     true_vs_pred(X_tsne, y, X_train_pca, y_pred_train,
                  X_test_pca, y_pred_test, reg=False, classes=out_le.classes_)
+
+    plot_final_errors(X, y, layers, comp_args,
+                      num_epochs=num_epochs, reg=False)
+    graph_confusion_matrix(y_test_np, y_pred_test, out_le.classes_)
 
 
 def main():

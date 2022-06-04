@@ -1,0 +1,173 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Lachaise Assignment
+% LaTeX Template
+% Version 1.1(26/6/2018)
+%
+% This template originates from:
+% http://www.LaTeXTemplates.com
+%
+% Authors:
+% Marion Lachaise & François Févotte
+% Vel (vel@LaTeXTemplates.com)
+%
+% License:
+% CC BY-NC-SA 3.0 (http://creativecommons.org/licenses/by-nc-sa/3.0/)
+% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%----------------------------------------------------------------------------------------
+%	PACKAGES AND OTHER DOCUMENT CONFIGURATIONS
+%----------------------------------------------------------------------------------------
+
+\documentclass{article}
+
+\input{structure.tex}
+
+\title{COMP4702: 2021 Final Exam} % Title of the assignment
+
+\author{Michael Ciccotosto-Camp\\ \texttt{s4430291}} % Author name and email address
+
+\date{University of Queensland --- \today}
+\begin{document}
+
+\maketitle % Print the title
+
+\section*{Data Edits and Visualizations}
+
+% \begin{itemize}
+%     \item What changes where made to the dataset. Were rows/columns removed or edited? Why?
+%     \item What any standardization/normalization performed?
+%     \item Does the data look easy to separate when projected onto a lower dimension using PCA,TSNE, etc? How might this influence which model we use?
+%     \item Graph the covariances between the data.
+% \end{itemize}
+
+To start rows that contained Nan values where removed from the data set so that all the features could be utilized for prediction. It was decided that we could try turning this into a classification problem by predicting the last column (with two classes, "b" and "g") a using the remaining as inputs. The last column was encoded to integer values using sklearns \texttt{LabelEncoder} function. Remaining columns where standardized using sklearns \texttt{StandardScaler} function. The distribution of classes is shown below.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{cls_dist.png}
+    \caption{Class distribution}
+\end{figure}
+
+A SCREE graph and covariance matrix was also produced for this data set.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.5]{scree_plot.png}
+    \caption{SCREE graph}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.4]{cov_mat.png}
+    \caption{Covariance Matrix}
+\end{figure}
+
+One thing to notice is that the vast majority of importance weighting in the spree graph resides in the first 5 principal components. This suggests that the data undergo dimensionality reduction without too much feature information loss. This is supported by the fact that there are a number of correlations depicted in the covariance matrix. A number of dimensionality reduction techniques were used project the data onto a 2-dimensional to see how well they separate out the data. Each feature was standardized before hand so that the dimensionality reduction techniques so that no feature had a information retention weighting. The techniques used were PCA, TSNE. The results are presented below.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{projection_PCA.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{projection_TSNE.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{projection_ISO.png}
+\end{figure}
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[scale=0.7]{projection_TSNE.png}
+% \end{figure}
+
+TSNE was chosen to be the preferred method for dimensionality reduction since it seemed to provide the best separation between classes.
+
+\section*{Logistic Regression Model}
+
+% \begin{itemize}
+%     \item What model was chosen? Explain why the selected model is suitable for the task at hand (eg its a good idea use SVC if a classification problem is given to us and all the inputs are continuous).
+%     \item What parameters were selected? Were they adjusted/how?
+% \end{itemize}
+
+A Logistic Regression model was chosen since these models are designed to perform classification tasks on binary inputs. sklearn's \texttt{LogisticRegression} implementation was used for this. A grid search was used to find the best parameters for the regularization strength (C) and tolerance for stopping criteria (tol). To do this, numerous Logistic Regression model's were trained with various combinations of different values for C and tol and the performance of each model was measured by averaging the accuracy of a 5-fold cross validation partition. The results of the grid search are shown below.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{lg_param_tune.png}
+\end{figure}
+
+Thus the parameters for this model was set to $C=0.809, tol=21.5443$ as the yielded the best cross validation scores. A confusion matrix and a visualizations of model predictions is shown below for a typical run when $1/5$ of the dataset is reversed for testing. Again, the data is projected onto a 2-dimensional plane via TSNE.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{true_vs_pred_lg.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{conf_mat.png}
+\end{figure}
+
+We can see that the model does poorly to distinguish between inputs when there is a lot of overlap between classes since they only make one partition in the dataset. We can also see there are many more missclassification with values from the "b" class (being incorrectly labeled as an input from "g") as a result of the boundary trying to maximise correct classification for the "g" as the are far more of them.
+
+\section*{Neural Network Model}
+
+A neural network model was also used since, although TSNE provides a good separation of classes in lower dimensions, there is still small amount of class overlap causing models using data reduced via TSNE to occasional misclassify points. The complexity of a neural network architecture may mean it could learn a non-trivial way to separate and classify points. To this end, an initial neural network architecture of a single hidden layer with relu activation and a single output with a sigmoid activation function was devised. The 6-layer hidden layer adds extra complexity to the model to assist in learning highly non-trivial and non-linear functions which one can also think of as also providing some sort of in-built dimensionality reduction. Relu activation functions were used for efficiently and are well known for generally providing good performance. A sigmoid function was used to turn the output into a value ranging between 0 and 1 (which can be interpreted as a probability of belonging to a class of 1). An Adam optimizer was used as it combines RMSProp with standard momentum meaning it generally has better learning rate adaptation than most other optimizers such as Adagrad, RMSProp and AdaDelta. Binary cross entropy was used as the loss function as it minimizes the dissimilarity between the empirical distribution of training data and the the distribution induced by the model for binary classification problems and directly optimizes the cross-entropy leading to naturally well-calibrated probabilities. A grid search over the learning rates was done to determine which learning rates was optimal for model training. The performance of each learning rates was measured by averaging the accuracy of a 5-fold cross validation partition. The model accuracies using different learning rates and an epoch of 50 is graphed below.
+
+From the graph learning rates between ... and ... provided the best results and a learning rate of ... was choosen for the remainder of experimentation. The validation and training loss was graphed over the number of epochs to see were overfitting may occur.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{nn_model_loss.png}
+\end{figure}
+
+As we can see, training the model beyond 100 epochs is likely going to overfit our model. Thus, the model was only trained with 100 epochs for the remainder of experimentation. A confusion matrix and a visualizations of model predictions is shown below for a typical run when $1/5$ of the dataset is reversed for testing. The data is projected onto a 2-dimensional plane via TSNE (but note that TSNE is not used anywhere within the prediction process).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{true_vs_pred_nn.png}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[scale=0.7]{conf_mat_nn.png}
+\end{figure}
+
+The training and testing errors had also been recorded over $10$ runs where accuracies where measured by averaging the accuracy of a 5-fold cross validation partition.
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{rrr}
+        \hline
+        Repetition & Train Acc & Test Acc \\
+        \hline
+        0          & 0.99715   & 0.957626 \\
+        1          & 1         & 0.997143 \\
+        2          & 1         & 1        \\
+        3          & 1         & 1        \\
+        4          & 1         & 1        \\
+        5          & 1         & 1        \\
+        6          & 1         & 1        \\
+        7          & 1         & 1        \\
+        8          & 1         & 1        \\
+        9          & 1         & 1        \\
+        \hline
+    \end{tabular}
+\end{table}
+
+It is very obvious that the neural network model performes far better when the Logistic Regression model as it is no longer restricted to a partition line within the feature space, but can learn a far more intricate separation boundary, pressumably in a higher dimensional space. As a result, we find it correctly identities far more inputs as belonging to the "b" classes.
+
+% \section*{Results}
+
+% \begin{itemize}
+%     \item For a classification problem, graph out a confusion matrix. How might the data projects onto lower dimensions explain confusion between certain classes. If two classes to closer together when projected onto a lower dimension, then there is a good chance that the model may mistake them.
+%     \item Graph how the true outputs compare to the predicted outputs.
+%     \item What other improvements to the model could be made if more time was allowed?
+% \end{itemize}
+
+\end{document}
