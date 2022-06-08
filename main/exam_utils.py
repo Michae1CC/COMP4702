@@ -15,6 +15,31 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
 
+def chunk(iterable, chunk_size):
+    """Generates lists of `chunk_size` elements from `iterable`.
+
+
+    >>> list(chunk((2, 3, 5, 7), 3))
+    [[2, 3, 5], [7]]
+    >>> list(chunk((2, 3, 5, 7), 2))
+    [[2, 3], [5, 7]]
+
+    Source:
+        https://stackoverflow.com/questions/8991506/iterate-an-iterator-by-chunks-of-n-in-python
+    """
+    iterable = iter(iterable)
+    while True:
+        chunk = []
+        try:
+            for _ in range(chunk_size):
+                chunk.append(next(iterable))
+            yield chunk
+        except StopIteration:
+            if chunk:
+                yield chunk
+            break
+
+
 def drop_high_nan(df, prop=0.2):
     """
     Drops columns from a dataframe with a high proportion of Nan values.
@@ -36,6 +61,29 @@ def drop_high_nan(df, prop=0.2):
 
     df.drop(columns=to_drop, inplace=True)
     return
+
+
+def expand_col(df, col_name):
+    from sklearn import preprocessing
+    pfk = df[col_name].str.split(pat="\s*", expand=True)
+    n, d = pfk.shape
+    to_drop = []
+    for i in range(1, d):
+        unique_chars = len(np.unique(pfk[i]))
+        if unique_chars < 2:
+            to_drop.append(i)
+    pfk.drop(columns=to_drop, inplace=True)
+    rename = {}
+    for col in pfk.columns:
+        if col == 0:
+            continue
+        pfk[col] = preprocessing.LabelEncoder().fit_transform(pfk[col])
+        rename[col] = f"{col_name} {col}"
+    pfk.rename(columns=rename, inplace=True)
+    df.drop(columns=[col_name], inplace=True)
+    df = pd.concat([df, pfk], axis=1).reindex(df.index)
+    df.drop(columns=[0], inplace=True)
+    return df
 
 
 def plot_cls_dist(y, labels):
@@ -199,7 +247,7 @@ def CV_heatmap_sklearn(model, X, y, feat_1, feat_2, feat_1_range, feat_2_range, 
     return
 
 
-def CV_onevar_sklearn(model, X, y, feat, feat_range, m_args=tuple(), m_kwargs={}):
+def CV_onevar_sklearn(model, X, y, feat, feat_range, m_args=tuple(), m_kwargs={}, reg=True):
     """
     Produces a heat map for gridsearching along various hyperparameters. Using
     CV.
@@ -224,29 +272,20 @@ def CV_onevar_sklearn(model, X, y, feat, feat_range, m_args=tuple(), m_kwargs={}
     for f1i, feat_val in enumerate(feat_range):
         m_kwargs[feat] = feat_val
         clf = model(*m_args, **m_kwargs)
-        scores = cross_val_score(clf, X, y, cv=5)
+        if reg:
+            scores = cross_val_score(
+                clf, X, y, cv=5, scoring="neg_mean_squared_error")
+        else:
+            scores = cross_val_score(
+                clf, X, y, cv=5, scoring="accuracy")
         acc[f1i] = np.mean(scores)
 
-    plot_meteric([(feat_range.squeeze(), acc.squeeze(), feat)], f"CV on {feat}",
-                 "Value", "Accuracy")
-
-    # grid_kws = {"height_ratios": (.9, .05), "hspace": .3}
-    # f, (ax, cbar_ax) = plt.subplots(2, gridspec_kw=grid_kws)
-    # ax = sns.plot(np.abs(acc), ax=ax,
-    #                  annot=True,
-    #                  cmap="plasma_r",
-    #                  cbar_ax=cbar_ax,
-    #                  cbar_kws={"orientation": "horizontal",
-    #                  'label': 'Accuracy'})
-    # ax.set_title("HyperParam Tuning", fontsize=16, fontweight="bold")
-    # ax.set_yticklabels(
-    #     list(map(lambda x: float("{:.4f}".format(x)), list(feat_range))),
-    #     rotation=0, va="center")
-    # ax.set_ylabel(feat.title(), fontsize=14, fontweight="bold")
-    # # plt.tight_layout()
-    # plt.show()
-    # plt.cla()
-    # plt.clf()
+    if reg:
+        plot_meteric([(feat_range.squeeze(), -acc.squeeze(), feat)], f"CV on {feat}",
+                     "Value", "MSE", log_x=True)
+    else:
+        plot_meteric([(feat_range.squeeze(), acc.squeeze(), feat)], f"CV on {feat}",
+                     "Value", "Accuracy", log_x=True)
     return
 
 
@@ -288,7 +327,7 @@ def graph_confusion_matrix(y_true, y_pred, classes):
     return
 
 
-def boxplots(X, x, y=None):
+def boxplots(X, x, y=None, log_y=False):
     """
     Plots various attributes/columns in a box plot format from a specified
     dataframe.
@@ -309,8 +348,11 @@ def boxplots(X, x, y=None):
     start_num = 0
     # fig, axes = plt.subplots(1, n, sharey=True)
     fig, axes = plt.subplots(1, n)
+    fig.subplots_adjust(wspace=0.1, hspace=0.1)
     if y is None:
         for x_ in x:
+            if log_y:
+                axes[start_num].set_yscale('symlog', linthresh=1e-5)
             g = sns.boxplot(ax=axes[start_num], y=x_,
                             data=X
                             )
@@ -338,9 +380,7 @@ def covar_matrix(X, feats=None):
     else:
         data = X
         n, d = X.shape
-    # print(data.shape)
     pcc = np.corrcoef(data, rowvar=False)
-    # print(pcc)
     grid_kws = {"height_ratios": (.9, .05), "hspace": .3}
     f, (ax, cbar_ax) = plt.subplots(2, gridspec_kw=grid_kws)
     ax = sns.heatmap(np.abs(pcc), ax=ax,
@@ -350,13 +390,20 @@ def covar_matrix(X, feats=None):
                      cbar_kws={"orientation": "horizontal",
                      'label': 'Covariance'})
     ax.set_title("Absolute Covariance")
-    if feats is not None:
-        ax.set_xticklabels(feats)
-        ax.set_yticklabels(feats, rotation=0, fontsize="10", va="center")
+    # if feats is not None:
+    #     ax.set_xticklabels(feats)
+    #     ax.set_yticklabels(feats, rotation=0, fontsize="10", va="center")
     # plt.tight_layout()
     plt.show()
     plt.cla()
     plt.clf()
+    return
+
+
+def tabulate_describtion(X):
+    from tabulate import tabulate
+    des_df = X.describe(include=[np.number, float, int]).transpose()
+    print(tabulate(des_df, headers="keys", tablefmt="latex"))
     return
 
 
@@ -461,7 +508,7 @@ def graph_reduced_dimensions(X, y, encoder=None, reg=True, method="PCA"):
             plt.scatter(cls_fitted[:, 0].squeeze(),
                         cls_fitted[:, 1].squeeze(), s=20, alpha=0.9, color=clr)
             legend.append(encoder.inverse_transform([cls_])[0])
-    plt.legend(legend)
+    # plt.legend(legend)
     plt.show()
     plt.cla()
     plt.clf()
@@ -496,11 +543,13 @@ def plot_lr_errors(X, y, layers, comp_args, num_epochs=100):
             model.compile(**comp_args)
             history = model.fit(train_ds, epochs=num_epochs,
                                 validation_data=test_ds, verbose=0)
-            errs.append(float(history.history['val_accuracy'][-1]))
+            errs.append(float(history.history['val_mean_squared_error'][-1]))
         lr_errs.append(np.mean(errs))
 
+    # plot_meteric([(lrs, lr_errs, "lr")], "", "Learning Rate",
+    #              "Accuracy", log_x=True)
     plot_meteric([(lrs, lr_errs, "lr")], "", "Learning Rate",
-                 "Accuracy", log_x=True)
+                 "MSE", log_x=True)
     return
 
 
@@ -543,6 +592,56 @@ def plot_final_errors(X, y, layers, comp_args, num_epochs=100, reg=True):
                     np.round(model.predict(X_train_np)), y_train_np))
                 test_pred.append(accuracy_score(
                     np.round(model.predict(X_test_np)), y_test_np))
+        train_preds.append(np.mean(train_pred))
+        test_preds.append(np.mean(test_pred))
+
+    if reg:
+        df = {
+            "Repetition": list(range(1, n_reps + 1)),
+            "Train MSE": train_preds,
+            "Test MSE": test_preds,
+        }
+    else:
+        df = {
+            "Repetition": list(range(1, n_reps + 1)),
+            "Train Acc": train_preds,
+            "Test Acc": test_preds,
+        }
+
+    print(tabulate(df, headers="keys", tablefmt="latex"))
+
+    return
+
+
+def plot_final_errors_sklearn(X, y, model_call, model_args=tuple(), model_kwargs={}, reg=True):
+    from sklearn.model_selection import KFold
+    from tabulate import tabulate
+
+    kf = KFold(n_splits=5)
+    n_reps = 10
+    train_preds = []
+    test_preds = []
+    for _ in range(n_reps):
+        train_pred = []
+        test_pred = []
+        for train_index, test_index in kf.split(X):
+            X_train_np, X_test_np, y_train_np, y_test_np = X[
+                train_index], X[test_index], y[train_index], y[test_index]
+
+            model = model_call(*model_args, **model_kwargs)
+            model.fit(X_train_np, y_train_np)
+
+            if reg:
+                train_pred.append(mean_squared_error(
+                    y_train_np, model.predict(X_train_np)))
+                test_pred.append(mean_squared_error(
+                    y_test_np, model.predict(X_test_np)))
+            else:
+                train_pred.append(accuracy_score(
+                    y_train_np, model.predict(X_train_np)))
+                test_pred.append(accuracy_score(
+                    y_test_np, model.predict(X_test_np)))
+
         train_preds.append(np.mean(train_pred))
         test_preds.append(np.mean(test_pred))
 
