@@ -63,6 +63,17 @@ def drop_high_nan(df, prop=0.2):
     return
 
 
+def drop_low_var(df, per=0.8):
+    import itertools
+    import operator
+    df_temp = df.copy()
+    df_temp = (df_temp-df_temp.min())/(df_temp.max()-df_temp.min())
+    name_std = sorted(list(zip(df_temp.std(), df_temp)), reverse=True)
+    retain_num = int(len(name_std) * (1 - per))
+    h_to_drop = list(map(operator.itemgetter(1), name_std[retain_num:]))
+    return h_to_drop
+
+
 def expand_col(df, col_name):
     from sklearn import preprocessing
     pfk = df[col_name].str.split(pat="\s*", expand=True)
@@ -189,7 +200,7 @@ def true_vs_pred(X, y, X_train, y_train_pred, X_test, y_test_pred, reg=True, sav
     return
 
 
-def CV_heatmap_sklearn(model, X, y, feat_1, feat_2, feat_1_range, feat_2_range, m_args=tuple(), m_kwargs={}):
+def CV_heatmap_sklearn(model, X, y, feat_1, feat_2, feat_1_range, feat_2_range, m_args=tuple(), m_kwargs={}, reg=True):
     """
     Produces a heat map for gridsearching along various hyperparameters. Using
     CV.
@@ -220,18 +231,32 @@ def CV_heatmap_sklearn(model, X, y, feat_1, feat_2, feat_1_range, feat_2_range, 
             m_kwargs[feat_1] = feat_1_val
             m_kwargs[feat_2] = feat_2_val
             clf = model(*m_args, **m_kwargs)
-            scores = cross_val_score(clf, X, y, cv=5)
+            if reg:
+                scores = cross_val_score(
+                    clf, X, y, cv=5, scoring="neg_mean_squared_error")
+            else:
+                scores = cross_val_score(
+                    clf, X, y, cv=5, scoring="accuracy")
             acc[f1i, f2i] = np.mean(scores)
 
     grid_kws = {"height_ratios": (.9, .05), "hspace": .3}
     f, (ax, cbar_ax) = plt.subplots(2, gridspec_kw=grid_kws)
-    ax = sns.heatmap(np.abs(acc), ax=ax,
-                     annot=True,
-                     fmt='.3f',
-                     cmap="plasma_r",
-                     cbar_ax=cbar_ax,
-                     cbar_kws={"orientation": "horizontal",
-                     'label': 'Accuracy'})
+    if reg:
+        ax = sns.heatmap(np.abs(acc), ax=ax,
+                         annot=True,
+                         fmt='.3f',
+                         cmap="plasma",
+                         cbar_ax=cbar_ax,
+                         cbar_kws={"orientation": "horizontal",
+                                   'label': 'MSE'})
+    else:
+        ax = sns.heatmap(np.abs(acc), ax=ax,
+                         annot=True,
+                         fmt='.3f',
+                         cmap="plasma_r",
+                         cbar_ax=cbar_ax,
+                         cbar_kws={"orientation": "horizontal",
+                                   'label': 'Accuracy'})
     ax.set_title("HyperParam Tuning", fontsize=16, fontweight="bold")
     ax.set_xticklabels(
         list(map(lambda x: float("{:.4f}".format(x)), list(feat_2_range))))
@@ -390,10 +415,10 @@ def covar_matrix(X, feats=None):
                      cbar_kws={"orientation": "horizontal",
                      'label': 'Covariance'})
     ax.set_title("Absolute Covariance")
-    # if feats is not None:
-    #     ax.set_xticklabels(feats)
-    #     ax.set_yticklabels(feats, rotation=0, fontsize="10", va="center")
-    # plt.tight_layout()
+    if feats is not None:
+        ax.set_xticklabels(feats, fontsize="9", rotation=45)
+        ax.set_yticklabels(feats, rotation=0, fontsize="7", va="center")
+    plt.tight_layout()
     plt.show()
     plt.cla()
     plt.clf()
