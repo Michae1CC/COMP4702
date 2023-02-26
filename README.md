@@ -45,6 +45,9 @@ The content listed by weeks with a specific file dedicated to each topic.
 ### Week 12 - Exam Pratice
 
 - Try your hand at applying these models to past exam data sets.
+    - [Penguin Dataset](data/penguins.csv)
+    - [Nutritional Information Dataset](data/FoodNutrients1.csv)
+    - [CPU Dataset](data/CPU_benchmark_v4.csv)
 
 ## Setup
 
